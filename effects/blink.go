@@ -9,21 +9,29 @@ func init() {
 	RegisterEffect("blink", func(args map[string]interface{}) (orchestrator.Effect, error) {
 		return NewBlink(args), nil
 	})
-	RegisterEffectParameters("blink", map[string]interface{}{"divider": 1}) // Default divider is 1
+	RegisterEffectParameters("blink", map[string]interface{}{
+		"divider":   1,
+		"dutyCycle": 0.5, // Default duty cycle is 0.5
+	})
 }
 
 // Blink alternates between two colors based on the global BPM.
 type Blink struct {
-	Divider int
+	Divider   int
+	DutyCycle float64
 }
 
 // NewBlink creates a new Blink effect.
 func NewBlink(args map[string]interface{}) *Blink {
 	divider := 1 // Default value
-	if d, ok := args["divider"].(float64); ok { // JSON numbers are float64
+	if d, ok := args["divider"].(float64); ok {
 		divider = int(d)
 	}
-	return &Blink{Divider: divider}
+	dutyCycle := 0.5 // Default value
+	if dc, ok := args["dutyCycle"].(float64); ok {
+		dutyCycle = dc
+	}
+	return &Blink{Divider: divider, DutyCycle: dutyCycle}
 }
 
 // Process applies the blink effect to the lamps.
@@ -34,11 +42,14 @@ func (b *Blink) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlob
 	// Each beat is divided into Divider * 2 segments (on/off cycles)
 	segment := int(globals.BeatProgress * float64(b.Divider*2))
 
-	if segment%2 == 0 {
-		// Show Color1 for even segments
+	// Calculate progress within the current segment (0.0 to 1.0)
+	progressInSegment := (globals.BeatProgress * float64(b.Divider*2)) - float64(segment)
+
+	if progressInSegment < b.DutyCycle {
+		// Show Color1 for the duration of the duty cycle within the segment
 		targetColor = globals.Color1
 	} else {
-		// Show Color2 for odd segments
+		// Show Color2 for the remainder of the segment
 		targetColor = globals.Color2
 	}
 
