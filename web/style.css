@@ -98,6 +98,7 @@ h1 {
     padding: 10px;
     border-radius: 5px;
     background-color: #3c3c3c;
+    box-shadow: 2px 2px 1px rgba(0, 0, 0, 0.5);
 }
 
 .chain-element h4 {
@@ -121,5 +122,37 @@ h1 {
 }
 
 .chain-element.disabled {
-    opacity: 0.5;
+    display: none;
+}
+
+/* New styles for effect groups */
+.effect-group-container {
+    border: 1px solid #007acc; /* Example border for the group container */
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #252526; /* Slightly different background for group */
+    margin-bottom: 10px; /* Space after the group */
+}
+
+.effect-group-container .chain-element:not(:first-child) {
+    display: none; /* Hide all but the first effect by default */
+}
+
+.effect-group-container.expanded .chain-element:not(:first-child) {
+    display: block; /* Show all effects when expanded */
+}
+
+.show-all-button {
+    background-color: #007acc;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+.show-all-button:hover {
+    background-color: #005f99;
 }
