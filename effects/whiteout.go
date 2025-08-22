@@ -5,6 +5,12 @@ import (
 	"godmx/orchestrator"
 )
 
+func init() {
+	RegisterEffect("whiteout", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return NewWhiteout(), nil
+	})
+}
+
 // Whiteout sets all lamps to full white.
 type Whiteout struct {
 	// No fields needed

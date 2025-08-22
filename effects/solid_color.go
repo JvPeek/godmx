@@ -5,6 +5,12 @@ import (
 	"godmx/orchestrator"
 )
 
+func init() {
+	RegisterEffect("solidColor", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return &SolidColor{}, nil
+	})
+}
+
 // SolidColor sets all lamps to a single color from global parameters.
 type SolidColor struct {
 	// No fields needed, color comes from globals

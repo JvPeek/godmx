@@ -7,6 +7,12 @@ import (
 	"math"
 )
 
+func init() {
+	RegisterEffect("rainbow", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return NewRainbow(), nil
+	})
+}
+
 // Rainbow creates a rainbow effect.
 type Rainbow struct {
 	counter float64

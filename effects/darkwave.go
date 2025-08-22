@@ -6,6 +6,12 @@ import (
 	"math"
 )
 
+func init() {
+	RegisterEffect("darkwave", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return NewDarkWave(args)
+	})
+}
+
 // DarkWave is an effect that creates a dark wave along the strip.
 	type DarkWave struct {
 	Percentage float64

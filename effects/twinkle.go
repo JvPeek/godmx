@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+func init() {
+	RegisterEffect("twinkle", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return NewTwinkle(args)
+	})
+}
+
 // Twinkle randomly turns a percentage of lamps to white.
 type Twinkle struct {
 	Percentage float64

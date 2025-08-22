@@ -104,34 +104,15 @@ func main() {
 		// Create Effects
 		for _, effectConfig := range chainConfig.Effects {
 			var effect orchestrator.Effect
-			switch effectConfig.Type {
-			case "rainbow":
-				effect = effects.NewRainbow()
-			case "solidColor":
-				effect = &effects.SolidColor{}
-			case "gradient":
-				effect = &effects.Gradient{}
-			case "blink":
-				effect = effects.NewBlink()
-			case "twinkle":
-				var err error
-			effect, err = effects.NewTwinkle(effectConfig.Args)
-			if err != nil {
-				fmt.Printf("Error creating twinkle effect for chain %s: %v\n", chainConfig.ID, err)
+			constructor, ok := effects.GetEffectConstructor(effectConfig.Type)
+			if !ok {
+				fmt.Printf("Unknown effect type: %s for chain %s. Available effects are: %v.\n", effectConfig.Type, chainConfig.ID, effects.GetAvailableEffects())
 				return
 			}
-			case "darkwave":
-				var err error
-			effect, err = effects.NewDarkWave(effectConfig.Args)
+			var err error
+			effect, err = constructor(effectConfig.Args)
 			if err != nil {
-				fmt.Printf("Error creating darkwave effect for chain %s: %v\n", chainConfig.ID, err)
-				return
-			}
-			// Add other effect types here
-			case "whiteout":
-				effect = effects.NewWhiteout()
-			default:
-				fmt.Printf("Unknown effect type: %s for chain %s.\n", effectConfig.Type, chainConfig.ID)
+				fmt.Printf("Error creating effect %s for chain %s: %v\n", effectConfig.Type, chainConfig.ID, err)
 				return
 			}
 			mainChain.AddEffect(effect)

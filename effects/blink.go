@@ -5,6 +5,12 @@ import (
 	"godmx/orchestrator"
 )
 
+func init() {
+	RegisterEffect("blink", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return NewBlink(), nil
+	})
+}
+
 // Blink alternates between two colors based on the global BPM.
 type Blink struct {
 	counter float64

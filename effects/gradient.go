@@ -7,6 +7,12 @@ import (
 	"godmx/utils"
 )
 
+func init() {
+	RegisterEffect("gradient", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return &Gradient{}, nil
+	})
+}
+
 // Gradient creates a color gradient across the lamps.
 type Gradient struct {
 	// No fields needed, colors come from globals
