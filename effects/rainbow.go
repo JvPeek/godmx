@@ -26,14 +26,13 @@ func NewRainbow() *Rainbow {
 // Process applies the rainbow effect to the lamps.
 func (r *Rainbow) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	numLamps := float64(len(lamps))
-	const fixedTickRate = 40.0 // Assuming 40 FPS as per current configs
+	// const fixedTickRate = 40.0 // Assuming 40 FPS as per current configs
 
 	// Calculate how much the counter should advance per tick to complete one cycle per beat
-	// counterIncrementPerTick = (numLamps * BPM) / (60 * fixedTickRate)
-	counterIncrementPerTick := (numLamps * globals.BPM) / (60.0 * fixedTickRate)
-	r.counter = math.Mod(r.counter + counterIncrementPerTick, numLamps)
+	// counterIncrementPerTick := (numLamps * globals.BPM) / (60.0 * fixedTickRate)
+	// r.counter = math.Mod(r.counter + counterIncrementPerTick, numLamps)
 
-	phaseShift := r.counter / numLamps
+	phaseShift := 0.0 // Static rainbow, no phase shift
 
 	for i := range lamps {
 		// Calculate hue: current position in rainbow + offset for each lamp
