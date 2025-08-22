@@ -40,8 +40,12 @@ func (c *Chain) AddEffect(effect Effect) {
 
 // Tick processes the chain's effects and sends data to the output.
 func (c *Chain) Tick() error {
+	// Update global beat progress before processing effects
+	c.orchestrator.UpdateBeatProgress()
+
 	// Process effects
-	globals := c.orchestrator.GetGlobals() // Get globals from the orchestrator
+	globals := c.orchestrator.GetGlobals()
+	globals.TickRate = c.TickRate // Get globals from the orchestrator
 	for _, effect := range c.Effects {
 		effect.Process(c.lamps, globals, c.channelMapping, c.numChannelsPerLamp) // Pass globals and channel info to the effect
 	}

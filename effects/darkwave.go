@@ -17,7 +17,6 @@ func init() {
 	type DarkWave struct {
 	Percentage float64
 	Speed      float64
-	step       float64
 }
 
 // NewDarkWave creates a new DarkWave effect.
@@ -30,9 +29,9 @@ func NewDarkWave(args map[string]interface{}) (*DarkWave, error) {
 
 // Process applies the DarkWave effect to the lamp strip.
 func (dw *DarkWave) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
-	dw.step += dw.Speed
+	step := globals.BeatProgress * 2 * math.Pi * dw.Speed
 	for i := 0; i < len(lamps); i++ {
-		sinValue := (math.Sin(float64(i)/float64(len(lamps))*2*math.Pi + dw.step) + 1) / 2
+		sinValue := (math.Sin(float64(i)/float64(len(lamps))*2*math.Pi + step) + 1) / 2
 		darkness := 1 - (sinValue * dw.Percentage)
 		lamps[i] = scaleColor(lamps[i], darkness)
 	}
