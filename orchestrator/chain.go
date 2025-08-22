@@ -5,7 +5,7 @@ import (
 	"godmx/config"
 	"godmx/dmx"
 	"godmx/effects"
-	"godmx/outputs"
+	
 	"godmx/types"
 	"sync"
 	"time"

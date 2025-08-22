@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"time"
+	"encoding/base64"
 
 	"godmx/dmx"
 	"godmx/config"
@@ -27,7 +28,7 @@ type goveeDevice struct {
 }
 
 // NewGoveeOutput creates a new GoveeOutput.
-func NewGoveeOutput(goveeConfig config.GoveeOutputConfig) (*GoveeOutput, error) {
+func NewGoveeOutput(goveeConfig config.GoveeOutputConfig, channelMapping string, numChannelsPerLamp int) (*GoveeOutput, error) {
 	goOutput := &GoveeOutput{} 
 
 	for _, devConfig := range goveeConfig.Devices {
@@ -48,6 +49,14 @@ func NewGoveeOutput(goveeConfig config.GoveeOutputConfig) (*GoveeOutput, error) 
 			conn:   conn,
 			lastSent: time.Now(),
 		})
+
+		// Send activation command
+		err = goOutput.sendRazerCommand(goveeDevice{config: devConfig, conn: conn}, "uwABsQEK")
+		if err != nil {
+			log.Printf("Failed to send Govee activation command to %s: %v\n", devConfig.IPAddress, err)
+			// Decide if you want to continue or stop if activation fails
+			// For now, we'll just log and continue
+		}
 	}
 
 	if len(goOutput.devices) == 0 {
@@ -57,62 +66,110 @@ func NewGoveeOutput(goveeConfig config.GoveeOutputConfig) (*GoveeOutput, error) 
 	return goOutput, nil
 }
 
-// Process sends the lamp data to Govee devices.
-func (g *GoveeOutput) Process(lamps []dmx.Lamp) {
-	// For simplicity, we'll just use the first lamp's color for all Govee devices
-	// In a more complex setup, you'd map DMX channels to individual Govee devices
+// Send sends the lamp data to Govee devices.
+func (g *GoveeOutput) Send(lamps []dmx.Lamp) error {
+	
 	if len(lamps) == 0 {
-		return
+		return nil
 	}
 
-	// Govee brightness is 1-100, DMX is 0-255. Scale it.
-	brightness := uint8(float64(lamps[0].R+lamps[0].G+lamps[0].B) / 3.0 / 2.55) // Average RGB and scale to 0-100
-	if brightness == 0 { brightness = 1 } // Govee brightness can't be 0, min is 1
-	if brightness > 100 { brightness = 100 }
+	// Prepare color data for the razer packet
+	// Collect all RGB values from all lamps
+	var colors []byte
+	for _, lamp := range lamps {
+		colors = append(colors, lamp.R, lamp.G, lamp.B)
+	}
 
-	r := lamps[0].R
-	g := lamps[0].G
-	b := lamps[0].B
+	// Create the razer packet
+	razerPacket, err := createRazerPacket(colors)
+	if err != nil {
+		log.Printf("Failed to create Govee razer packet: %v\n", err)
+		return err
+	}
 
-	// Construct Govee JSON command
+	// Base64 encode the razer packet
+	encodedPacket := base64.StdEncoding.EncodeToString(razerPacket)
+
+	for _, dev := range g.devices {
+		// Govee devices have a rate limit of 100ms per command
+		if time.Since(dev.lastSent) < 100*time.Millisecond {
+			continue
+		}
+
+		// Send the razer command
+		err = g.sendRazerCommand(dev, encodedPacket)
+		if err != nil {
+			log.Printf("Failed to send Govee razer command: %v\n", err)
+		} else {
+			dev.lastSent = time.Now()
+		}
+	}
+	return nil
+}
+
+
+// Close closes all UDP connections for Govee devices.
+func (g *GoveeOutput) Close() {
+	for _, dev := range g.devices {
+		if dev.conn != nil {
+			err := dev.conn.Close()
+			if err != nil {
+				log.Printf("Error closing Govee UDP connection for %s: %v\n", dev.config.IPAddress, err)
+			}
+		}
+	}
+	log.Println("GoveeOutput connections closed.")
+}
+
+// calculateXORChecksumFast calculates the XOR checksum of a byte array.
+func calculateXORChecksumFast(packet []byte) byte {
+	var checksum byte
+	for _, b := range packet {
+		checksum ^= b
+	}
+	return checksum
+}
+
+// createRazerPacket creates a Govee razer packet from color data.
+func createRazerPacket(colors []byte) ([]byte, error) {
+	// This header is based on LedFX's pre_dreams header, modified for 0 segments and 0 stretch
+	// BB 00 FA B0 00 (header) + 0x04 (color triples count)
+	// The 0x04 in LedFX's pre_dreams is actually the count of color triples, not a fixed value.
+	// So, the last byte of the header should be len(colors) / 3.
+	header := []byte{0xBB, 0x00, 0xFA, 0xB0, 0x00, byte(len(colors) / 3)}
+
+	// Concatenate header and colors
+	fullPacket := append(header, colors...)
+
+	// Calculate checksum and append
+	checksum := calculateXORChecksumFast(fullPacket)
+	fullPacket = append(fullPacket, checksum)
+
+	return fullPacket, nil
+}
+
+// sendRazerCommand sends a razer command with a base64 encoded payload to a specific Govee device.
+func (g *GoveeOutput) sendRazerCommand(dev goveeDevice, payload string) error {
 	cmd := map[string]interface{}{
 		"msg": map[string]interface{}{
-			"cmd": "color",
+			"cmd": "razer",
 			"data": map[string]interface{}{
-				"r": r,
-				"g": g,
-				"b": b,
-				"brightness": brightness,
+				"pt": payload,
 			},
 		},
 	}
 
 	jsonCmd, err := json.Marshal(cmd)
 	if err != nil {
-		log.Printf("Failed to marshal Govee command: %v\n", err)
-		return
+		return fmt.Errorf("failed to marshal razer command: %w", err)
 	}
 
-	for _, dev := range g.devices {
-		// Add MAC address to the command for Govee devices
-		// This is often required by Govee's protocol, even for LAN control
-		// The exact placement might vary, but it's common to include it in the top-level msg
-		// Let's assume it needs to be in the data field for now, based on some examples
-		// Re-marshal with MAC if needed, or modify the map before marshalling
-		// For now, let's just send the color command as is, assuming MAC is handled by device discovery
-		// or not strictly required for direct control.
-
-		// Govee devices have a rate limit of 100ms per command
-		if time.Since(dev.lastSent) < 100*time.Millisecond {
-			continue
-		}
-
-		_, err := dev.conn.Write(jsonCmd)
-		if err != nil {
-			log.Printf("Failed to send Govee command to %s (%s): %v\n", dev.config.IPAddress, dev.config.MACAddress, err)
-		} else {
-			// log.Printf("Sent Govee command to %s: %s\n", dev.config.IPAddress, string(jsonCmd))
-			dev.lastSent = time.Now()
-		}
+	
+	_, err = dev.conn.Write(jsonCmd)
+	if err != nil {
+		return fmt.Errorf("failed to send Govee razer command to %s (%s): %w", dev.config.IPAddress, dev.config.MACAddress, err)
 	}
+	
+	return nil
 }
+

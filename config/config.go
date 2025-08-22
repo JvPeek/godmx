@@ -319,23 +319,24 @@ func CreateDefaultConfig() Config {
 				ID:       "goveeChain",
 				Priority: 3,
 				TickRate: 20,
-				NumLamps: 1, // Govee devices are typically single lamps
+				NumLamps: 16, // Updated to 16
 				Effects: []EffectConfig{
 					{
 						ID:      "goveeRainbow",
 						Type:    "rainbow",
 						Args:    make(map[string]interface{}),
 						Enabled: &trueVal,
+						Group:   "govee_color_effects", // Added group
 					},
 				},
 				Output: OutputConfig{
 					Type: "govee",
 					Govee: GoveeOutputConfig{
-						APIKey: "YOUR_GOVEE_API_KEY", // Replace with your actual Govee API Key
+						// APIKey: "YOUR_GOVEE_API_KEY", // Removed APIKey
 						Devices: []GoveeDeviceConfig{
 							{
-								MACAddress: "XX:XX:XX:XX:XX:XX", // Replace with your Govee device MAC
-								IPAddress:  "192.168.1.100",     // Replace with your Govee device IP
+								MACAddress: "XX:XX:XX:XX:XX:XX", // Placeholder
+								IPAddress:  "192.168.1.100",     // Placeholder
 							},
 						},
 					},
@@ -370,36 +371,37 @@ func CreateDefaultConfig() Config {
 					EffectID: "strobeEffect",
 				},
 			},
-			"rainbow_off": {
-				{
-					Type:     "toggle_effect",
-					ChainID:  "mainChain",
-					EffectID: "defaultRainbow",
-					Params:   map[string]interface{}{"enabled": false},
-				},
-			},
-			"rainbow_on": {
+			"rainbow_on": { // Updated
 				{
 					Type:     "toggle_effect",
 					ChainID:  "mainChain",
 					EffectID: "defaultRainbow",
 					Params:   map[string]interface{}{"enabled": true},
 				},
-			},
-			"solid_color_off": {
 				{
 					Type:     "toggle_effect",
-					ChainID:  "mainChain",
-					EffectID: "defaultSolidColor",
-					Params:   map[string]interface{}{"enabled": false},
+					ChainID:  "goveeChain",
+					EffectID: "goveeRainbow",
+					Params:   map[string]interface{}{"enabled": true},
 				},
 			},
-			"solid_color_on": {
+			"solid_color_on": { // Updated
 				{
 					Type:     "toggle_effect",
 					ChainID:  "mainChain",
 					EffectID: "defaultSolidColor",
 					Params:   map[string]interface{}{"enabled": true},
+				},
+				{
+					Type:    "add_effect",
+					ChainID: "goveeChain",
+					Params: map[string]interface{}{
+						"id":      "goveeSolidColor",
+						"type":    "solidColor",
+						"enabled": true,
+						"args":    map[string]interface{}{"color": "#FF0000"},
+						"group":   "govee_color_effects", // Added group
+					},
 				},
 			},
 			"faster_bpm": {

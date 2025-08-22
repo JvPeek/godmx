@@ -89,6 +89,13 @@ func main() {
 				return
 			}
 			output = artNetOutput
+		case "govee":
+			goveeOutput, err := outputs.NewGoveeOutput(chainConfig.Output.Govee, chainConfig.Output.ChannelMapping, chainConfig.Output.NumChannelsPerLamp)
+			if err != nil {
+				fmt.Printf("Error creating Govee output for chain %s: %v\n", chainConfig.ID, err)
+				return
+			}
+			output = goveeOutput
 		default:
 			fmt.Printf("Unknown output type: %s for chain %s.\n", chainConfig.Output.Type, chainConfig.ID)
 			return
