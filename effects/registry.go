@@ -8,6 +8,18 @@ import (
 // EffectConstructor is a function type that constructs an Effect from a map of arguments.
 type EffectConstructor func(args map[string]interface{}) (types.Effect, error)
 
+func init() {
+	RegisterEffect("cyberfall", NewCyberfall)
+	RegisterEffectParameters("cyberfall", map[string]interface{}{
+		"speed":           1.0,
+		"density":         0.5,
+		"trail_length":    10,
+		"min_brightness":  0,
+		"max_brightness":  255,
+		"flicker_intensity": 0.1,
+	})
+}
+
 var (
 	effectRegistry = make(map[string]EffectConstructor)
 	effectParameterRegistry = make(map[string]map[string]interface{})
