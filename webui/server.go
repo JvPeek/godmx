@@ -21,16 +21,20 @@ type ChainConfig struct {
 }
 
 // OutputConfig represents a simplified output configuration for JSON serialization
-type OutputConfig struct {
-	Type               string `json:"Type"`
-	ChannelMapping     string `json:"ChannelMapping"`
-	NumChannelsPerLamp int    `json:"NumChannelsPerLamp"`
+type EffectConfig struct {
+	Type string                 `json:"Type"`
+	Args map[string]interface{} `json:"Args"`
 }
 
-// EffectConfig represents a simplified effect configuration for JSON serialization
-type EffectConfig struct {
-	Type string `json:"Type"`
+// OutputConfig represents a simplified output configuration for JSON serialization
+type OutputConfig struct {
+	Type               string                 `json:"Type"`
+	Args               map[string]interface{} `json:"Args"`
+	ChannelMapping     string                 `json:"ChannelMapping"`
+	NumChannelsPerLamp int                    `json:"NumChannelsPerLamp"`
 }
+
+
 
 // StartWebServer starts the HTTP server for the web UI.
 func StartWebServer(orch *orchestrator.Orchestrator, cfg *config.Config, port int) {
@@ -54,12 +58,13 @@ func StartWebServer(orch *orchestrator.Orchestrator, cfg *config.Config, port in
 		for _, chainCfg := range cfg.Chains {
 			simplifiedOutput := OutputConfig{
 				Type:               chainCfg.Output.Type,
+				Args:               chainCfg.Output.Args,
 				ChannelMapping:     chainCfg.Output.ChannelMapping,
 				NumChannelsPerLamp: chainCfg.Output.NumChannelsPerLamp,
 			}
 			var simplifiedEffects []EffectConfig
 			for _, effectCfg := range chainCfg.Effects {
-				simplifiedEffects = append(simplifiedEffects, EffectConfig{Type: effectCfg.Type})
+				simplifiedEffects = append(simplifiedEffects, EffectConfig{Type: effectCfg.Type, Args: effectCfg.Args})
 			}
 			simplifiedChains = append(simplifiedChains, ChainConfig{
 				ID:        chainCfg.ID,

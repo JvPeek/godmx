@@ -80,3 +80,44 @@ h1 {
     padding: 5px;
     border-radius: 4px;
 }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chain-box {
+        width: 100%;
+    }
+}
+
+.chain-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.chain-element {
+    border: 1px solid #005f99;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #3c3c3c;
+}
+
+.chain-element h4 {
+    color: #9cdcfe;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.args-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 5px;
+    font-size: 0.9em;
+}
+
+.args-list li {
+    background-color: #4a4a4a;
+    margin-bottom: 2px;
+    padding: 3px 5px;
+    border-radius: 3px;
+}

@@ -7,6 +7,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentBPM = 0;
     let currentChains = [];
 
+    const renderArgs = (args) => {
+        if (!args || Object.keys(args).length === 0) {
+            return '';
+        }
+        return `
+            <ul class="args-list">
+                ${Object.entries(args).map(([key, value]) => `
+                    <li><strong>${key}:</strong> ${JSON.stringify(value)}</li>
+                `).join('')}
+            </ul>
+        `;
+    };
+
     const renderChains = (chains) => {
         chainsContainer.innerHTML = ''; // Clear existing chains
         chains.forEach(chain => {
@@ -15,16 +28,29 @@ document.addEventListener('DOMContentLoaded', () => {
             chainBox.innerHTML = `
                 <h2>${chain.ID}</h2>
                 <p>Priority: ${chain.Priority}</p>
-                <p>Tick Rate: ${chain.TickRate} FPS</p>
-                <p>Num Lamps: ${chain.NumLamps}</p>
-                <h3>Output:</h3>
-                <p>Type: ${chain.Output.Type}</p>
-                <p>Channel Mapping: ${chain.Output.ChannelMapping}</p>
-                <p>Channels per Lamp: ${chain.Output.NumChannelsPerLamp}</p>
-                <h3>Effects:</h3>
-                <ul>
-                    ${chain.Effects.map(effect => `<li>${effect.Type}</li>`).join('')}
-                </ul>
+                
+                <h3>Chain Flow:</h3>
+                <div class="chain-flow">
+                    <div class="chain-element">
+                        <h4>Tick</h4>
+                        <p><strong>Rate:</strong> ${chain.TickRate} FPS</p>
+                        <p><strong>Lamps:</strong> ${chain.NumLamps}</p>
+                    </div>
+                    
+                    ${chain.Effects.map(effect => `
+                        <div class="chain-element">
+                            <h4>Effect: ${effect.Type}</h4>
+                            ${renderArgs(effect.Args)}
+                        </div>
+                    `).join('')}
+
+                    <div class="chain-element">
+                        <h4>Output: ${chain.Output.Type}</h4>
+                        <p><strong>Channel Mapping:</strong> ${chain.Output.ChannelMapping}</p>
+                        <p><strong>Channels per Lamp:</strong> ${chain.Output.NumChannelsPerLamp}</p>
+                        ${renderArgs(chain.Output.Args)}
+                    </div>
+                </div>
             `;
             chainsContainer.appendChild(chainBox);
         });
