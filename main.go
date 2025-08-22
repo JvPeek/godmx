@@ -10,6 +10,7 @@ import (
 	"godmx/webui"
 	"os"
 	"time"
+	"godmx/effects"
 )
 
 func main() {
@@ -18,9 +19,22 @@ func main() {
 	configPath := flag.String("config", "config.json", "Path to the configuration file")
 	webPort := flag.Int("web-port", 8080, "Port for the web UI")
 	eventName := flag.String("event", "", "Name of an event to trigger on startup")
+	docs := flag.Bool("docs", false, "Generate documentation for effects in EFFECTS.md")
 	flag.Parse()
 
+	// Generate documentation if -docs flag is present
+	if *docs {
+		fmt.Println("Generating EFFECTS.md documentation...")
+		if err := effects.GenerateEffectDocumentation(); err != nil {
+			fmt.Printf("Error generating documentation: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Documentation generated successfully.")
+		return
+	}
+
 	fmt.Println("Starting godmx...")
+
 
 	// Check if config file exists, create if not
 	if _, err := os.Stat(*configPath); os.IsNotExist(err) {

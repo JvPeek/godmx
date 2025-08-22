@@ -11,7 +11,20 @@ func init() {
 	RegisterEffect("shift", func(args map[string]interface{}) (types.Effect, error) {
 		return NewShift(args)
 	})
-	RegisterEffectParameters("shift", map[string]interface{}{"direction": "left"})
+	RegisterEffectMetadata("shift", types.EffectMetadata{
+		HumanReadableName: "Shift",
+		Description:       "Shifts the DMX data (colors) across the lamps either left or right, synchronized with the BPM.",
+		Tags:              []string{"bpm_sensitive", "transparent", "transform", "pattern"},
+		Parameters: []types.ParameterMetadata{
+			{
+				InternalName: "direction",
+				DisplayName:  "Direction",
+				Description:  "The direction to shift the lamps ('left' or 'right').",
+				DataType:     "string",
+				DefaultValue: "left",
+			},
+		},
+	})
 }
 
 // Shift effect shifts the DMX data left or right.

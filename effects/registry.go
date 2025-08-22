@@ -8,21 +8,11 @@ import (
 // EffectConstructor is a function type that constructs an Effect from a map of arguments.
 type EffectConstructor func(args map[string]interface{}) (types.Effect, error)
 
-func init() {
-	RegisterEffect("cyberfall", NewCyberfall)
-	RegisterEffectParameters("cyberfall", map[string]interface{}{
-		"speed":           1.0,
-		"density":         0.5,
-		"trail_length":    10,
-		"min_brightness":  0,
-		"max_brightness":  255,
-		"flicker_intensity": 0.1,
-	})
-}
+
 
 var (
 	effectRegistry = make(map[string]EffectConstructor)
-	effectParameterRegistry = make(map[string]map[string]interface{})
+	effectMetadataRegistry = make(map[string]types.EffectMetadata)
 )
 
 // RegisterEffect registers an effect constructor with a given name.
@@ -33,12 +23,12 @@ func RegisterEffect(name string, constructor EffectConstructor) {
 	effectRegistry[name] = constructor
 }
 
-// RegisterEffectParameters registers the default parameters for an effect.
-func RegisterEffectParameters(name string, params map[string]interface{}) {
-	if _, exists := effectParameterRegistry[name]; exists {
-		panic(fmt.Sprintf("Effect parameters for '%s' already registered", name))
+// RegisterEffectMetadata registers comprehensive metadata for an effect.
+func RegisterEffectMetadata(name string, metadata types.EffectMetadata) {
+	if _, exists := effectMetadataRegistry[name]; exists {
+		panic(fmt.Sprintf("Effect metadata for '%s' already registered", name))
 	}
-	effectParameterRegistry[name] = params
+	effectMetadataRegistry[name] = metadata
 }
 
 // GetEffectConstructor retrieves an effect constructor by name.
@@ -47,10 +37,10 @@ func GetEffectConstructor(name string) (EffectConstructor, bool) {
 	return constructor, ok
 }
 
-// GetEffectParameters retrieves the default parameters for an effect by name.
-func GetEffectParameters(name string) (map[string]interface{}, bool) {
-	params, ok := effectParameterRegistry[name]
-	return params, ok
+// GetEffectMetadata retrieves comprehensive metadata for an effect by name.
+func GetEffectMetadata(name string) (types.EffectMetadata, bool) {
+	metadata, ok := effectMetadataRegistry[name]
+	return metadata, ok
 }
 
 // GetAvailableEffects returns a slice of all registered effect names.
@@ -60,4 +50,37 @@ func GetAvailableEffects() []string {
 		names = append(names, name)
 	}
 	return names
+}
+
+// Helper functions for backward compatibility or specific needs
+
+// GetEffectParameters retrieves the default parameters for an effect by name from its metadata.
+func GetEffectParameters(name string) (map[string]interface{}, bool) {
+	metadata, ok := GetEffectMetadata(name)
+	if !ok {
+		return nil, false
+	}
+	params := make(map[string]interface{})
+	for _, p := range metadata.Parameters {
+		params[p.InternalName] = p.DefaultValue
+	}
+	return params, true
+}
+
+// GetEffectTags retrieves the tags for an effect by name from its metadata.
+func GetEffectTags(name string) ([]string, bool) {
+	metadata, ok := GetEffectMetadata(name)
+	if !ok {
+		return nil, false
+	}
+	return metadata.Tags, true
+}
+
+// GetEffectDescription retrieves the description for an effect by name from its metadata.
+func GetEffectDescription(name string) (string, bool) {
+	metadata, ok := GetEffectMetadata(name)
+	if !ok {
+		return "", false
+	}
+	return metadata.Description, true
 }

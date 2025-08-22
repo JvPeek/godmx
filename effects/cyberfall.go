@@ -11,6 +11,66 @@ import (
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	RegisterEffect("cyberfall", NewCyberfall)
+	RegisterEffectMetadata("cyberfall", types.EffectMetadata{
+		HumanReadableName: "Cyberfall",
+		Description:       "Simulates digital rain, acting as a brightness mask over existing colors.",
+		Tags:              []string{"transparent", "brightness_mask", "random"},
+		Parameters: []types.ParameterMetadata{
+			{
+				InternalName: "speed",
+				DisplayName:  "Speed",
+				Description:  "How fast the 'rain' falls.",
+				DataType:     "float64",
+				DefaultValue: 1.0,
+				MinValue:     0.0,
+			},
+			{
+				InternalName: "density",
+				DisplayName:  "Density",
+				Description:  "How many 'active' columns are falling (0.0 - 1.0).",
+				DataType:     "float64",
+				DefaultValue: 0.5,
+				MinValue:     0.0,
+				MaxValue:     1.0,
+			},
+			{
+				InternalName: "trail_length",
+				DisplayName:  "Trail Length",
+				Description:  "How long the 'tail' of the falling light is (in lamps).",
+				DataType:     "int",
+				DefaultValue: 10,
+				MinValue:     0,
+			},
+			{
+				InternalName: "min_brightness",
+				DisplayName:  "Min Brightness",
+				Description:  "Minimum brightness for dark parts (0-255).",
+				DataType:     "int",
+				DefaultValue: 0,
+				MinValue:     0,
+				MaxValue:     255,
+			},
+			{
+				InternalName: "max_brightness",
+				DisplayName:  "Max Brightness",
+				Description:  "Maximum brightness for bright parts (0-255).",
+				DataType:     "int",
+				DefaultValue: 255,
+				MinValue:     0,
+				MaxValue:     255,
+			},
+			{
+				InternalName: "flicker_intensity",
+				DisplayName:  "Flicker Intensity",
+				Description:  "Random variation applied to brightness (0.0 - 1.0).",
+				DataType:     "float64",
+				DefaultValue: 0.1,
+				MinValue:     0.0,
+				MaxValue:     1.0,
+			},
+		},
+	})
 }
 
 // Cyberfall effect simulates digital rain, acting as a brightness mask.

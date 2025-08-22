@@ -11,7 +11,12 @@ func init() {
 	RegisterEffect("gradient", func(args map[string]interface{}) (types.Effect, error) {
 		return &Gradient{}, nil
 	})
-	RegisterEffectParameters("gradient", make(map[string]interface{}))
+	RegisterEffectMetadata("gradient", types.EffectMetadata{
+		HumanReadableName: "Gradient",
+		Description:       "Creates a smooth color gradient across the lamps, interpolating between global Color1 and Color2.",
+		Tags:              []string{"color_source", "pattern"},
+		Parameters:        []types.ParameterMetadata{},
+	})
 }
 
 // Gradient creates a color gradient across the lamps.

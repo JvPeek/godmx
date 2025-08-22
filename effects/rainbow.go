@@ -11,7 +11,12 @@ func init() {
 	RegisterEffect("rainbow", func(args map[string]interface{}) (types.Effect, error) {
 		return NewRainbow(), nil
 	})
-	RegisterEffectParameters("rainbow", make(map[string]interface{}))
+	RegisterEffectMetadata("rainbow", types.EffectMetadata{
+		HumanReadableName: "Rainbow",
+		Description:       "Generates a static rainbow spectrum across the lamps.",
+		Tags:              []string{"color_source", "pattern"},
+		Parameters:        []types.ParameterMetadata{},
+	})
 }
 
 // Rainbow creates a rainbow effect.

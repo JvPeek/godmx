@@ -11,7 +11,22 @@ func init() {
 	RegisterEffect("twinkle", func(args map[string]interface{}) (types.Effect, error) {
 		return NewTwinkle(args)
 	})
-	RegisterEffectParameters("twinkle", map[string]interface{}{"percentage": 0.1})
+	RegisterEffectMetadata("twinkle", types.EffectMetadata{
+		HumanReadableName: "Twinkle",
+		Description:       "Randomly turns a percentage of lamps to white at the beginning of each beat, creating a twinkling effect.",
+		Tags:              []string{"bpm_sensitive", "color_source", "random", "pattern"},
+		Parameters: []types.ParameterMetadata{
+			{
+				InternalName: "percentage",
+				DisplayName:  "Percentage",
+				Description:  "The percentage of lamps to twinkle (0.0 - 1.0).",
+				DataType:     "float64",
+				DefaultValue: 0.1,
+				MinValue:     0.0,
+				MaxValue:     1.0,
+			},
+		},
+	})
 }
 
 // Twinkle randomly turns a percentage of lamps to white.

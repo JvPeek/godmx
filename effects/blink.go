@@ -9,9 +9,29 @@ func init() {
 	RegisterEffect("blink", func(args map[string]interface{}) (types.Effect, error) {
 		return NewBlink(args), nil
 	})
-	RegisterEffectParameters("blink", map[string]interface{}{
-		"divider":   1,
-		"dutyCycle": 0.5, // Default duty cycle is 0.5
+	RegisterEffectMetadata("blink", types.EffectMetadata{
+		HumanReadableName: "Blink",
+		Description:       "Alternates between two colors based on the global BPM, creating a blinking effect.",
+		Tags:              []string{"bpm_sensitive", "color_source", "pattern"},
+		Parameters: []types.ParameterMetadata{
+			{
+				InternalName: "divider",
+				DisplayName:  "Divider",
+				Description:  "Divides the beat into segments for faster blinking.",
+				DataType:     "int",
+				DefaultValue: 1,
+				MinValue:     1,
+			},
+			{
+				InternalName: "dutyCycle",
+				DisplayName:  "Duty Cycle",
+				Description:  "Percentage of the segment that Color1 is shown.",
+				DataType:     "float64",
+				DefaultValue: 0.5,
+				MinValue:     0.0,
+				MaxValue:     1.0,
+			},
+		},
 	})
 }
 

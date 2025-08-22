@@ -11,7 +11,22 @@ func init() {
 	RegisterEffect("dim", func(args map[string]interface{}) (types.Effect, error) {
 		return NewDim(args)
 	})
-	RegisterEffectParameters("dim", map[string]interface{}{"percentage": 0.5})
+	RegisterEffectMetadata("dim", types.EffectMetadata{
+		HumanReadableName: "Dim",
+		Description:       "Dims all lamps by a specified percentage.",
+		Tags:              []string{"transparent", "brightness_mask"},
+		Parameters: []types.ParameterMetadata{
+			{
+				InternalName: "percentage",
+				DisplayName:  "Percentage",
+				Description:  "The percentage to dim the lamps by (0.0 - 1.0).",
+				DataType:     "float64",
+				DefaultValue: 0.5,
+				MinValue:     0.0,
+				MaxValue:     1.0,
+			},
+		},
+	})
 }
 
 // Dim effect dims all lamps by a specified percentage.

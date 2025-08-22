@@ -10,7 +10,30 @@ func init() {
 	RegisterEffect("darkwave", func(args map[string]interface{}) (types.Effect, error) {
 		return NewDarkWave(args)
 	})
-	RegisterEffectParameters("darkwave", map[string]interface{}{"percentage": 0.5, "speed": 1.0})
+	RegisterEffectMetadata("darkwave", types.EffectMetadata{
+		HumanReadableName: "Darkwave",
+		Description:       "Creates a dark wave that travels across the lamps, dimming them based on a sine wave.",
+		Tags:              []string{"bpm_sensitive", "transparent", "brightness_mask", "pattern"},
+		Parameters: []types.ParameterMetadata{
+			{
+				InternalName: "percentage",
+				DisplayName:  "Percentage",
+				Description:  "The maximum percentage of dimming applied by the wave (0.0 - 1.0).",
+				DataType:     "float64",
+				DefaultValue: 0.5,
+				MinValue:     0.0,
+				MaxValue:     1.0,
+			},
+			{
+				InternalName: "speed",
+				DisplayName:  "Speed",
+				Description:  "How fast the dark wave travels.",
+				DataType:     "float64",
+				DefaultValue: 1.0,
+				MinValue:     0.0,
+			},
+		},
+	})
 }
 
 // DarkWave is an effect that creates a dark wave along the strip.

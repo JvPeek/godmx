@@ -9,7 +9,12 @@ func init() {
 	RegisterEffect("solidColor", func(args map[string]interface{}) (types.Effect, error) {
 		return &SolidColor{}, nil
 	})
-	RegisterEffectParameters("solidColor", make(map[string]interface{}))
+	RegisterEffectMetadata("solidColor", types.EffectMetadata{
+		HumanReadableName: "Solid Color",
+		Description:       "Sets all lamps to a single color defined by global Color1.",
+		Tags:              []string{"color_source"},
+		Parameters:        []types.ParameterMetadata{},
+	})
 }
 
 // SolidColor sets all lamps to a single color from global parameters.

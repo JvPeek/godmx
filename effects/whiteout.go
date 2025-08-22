@@ -9,7 +9,12 @@ func init() {
 	RegisterEffect("whiteout", func(args map[string]interface{}) (types.Effect, error) {
 		return NewWhiteout(), nil
 	})
-	RegisterEffectParameters("whiteout", make(map[string]interface{}))
+	RegisterEffectMetadata("whiteout", types.EffectMetadata{
+		HumanReadableName: "Whiteout",
+		Description:       "Sets all lamps to full white, overriding any previous colors.",
+		Tags:              []string{"color_source"},
+		Parameters:        []types.ParameterMetadata{},
+	})
 }
 
 // Whiteout sets all lamps to full white.
