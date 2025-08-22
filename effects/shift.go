@@ -34,7 +34,10 @@ type Shift struct {
 
 // NewShift creates a new Shift effect.
 func NewShift(args map[string]interface{}) (*Shift, error) {
-	direction := args["direction"].(string)
+	direction, ok := args["direction"].(string)
+	if !ok || direction == "" {
+		direction = "left" // Default to "left" if not provided or empty
+	}
 
 	if direction != "left" && direction != "right" {
 		return nil, fmt.Errorf("invalid direction for shift effect: %s. Must be 'left' or 'right'", direction)
