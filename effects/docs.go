@@ -12,8 +12,7 @@ func GenerateEffectDocumentation() error {
 	var builder strings.Builder
 
 	builder.WriteString("# Registered Effects\n\n")
-	builder.WriteString("| Effect Name | Description | Parameters | Tags |\n")
-	builder.WriteString("|-------------|-------------|------------|------|\n")
+	builder.WriteString("This document outlines all available lighting effects, their descriptions, and configurable parameters.\n\n")
 
 	names := GetAvailableEffects()
 	sort.Strings(names)
@@ -24,23 +23,45 @@ func GenerateEffectDocumentation() error {
 			continue // Should not happen if GetAvailableEffects is accurate
 		}
 
-		paramStr := ""
-		if len(metadata.Parameters) > 0 {
-			paramNames := make([]string, 0, len(metadata.Parameters))
-			for _, p := range metadata.Parameters {
-				paramNames = append(paramNames, fmt.Sprintf("%s (%s, default: %v)", p.DisplayName, p.DataType, p.DefaultValue))
-			}
-			sort.Strings(paramNames)
-			paramStr = strings.Join(paramNames, ", ")
-		}
+		// Effect Heading
+		builder.WriteString(fmt.Sprintf("## %s\n\n", metadata.HumanReadableName))
 
-		tagStr := ""
+		// Description
+		builder.WriteString(fmt.Sprintf("%s\n\n", metadata.Description))
+
+		// Tags
 		if len(metadata.Tags) > 0 {
 			sort.Strings(metadata.Tags)
-			tagStr = strings.Join(metadata.Tags, ", ")
+			builder.WriteString(fmt.Sprintf("**Tags**: %s\n\n", strings.Join(metadata.Tags, ", ")))
 		}
 
-		builder.WriteString(fmt.Sprintf("| %s | %s | %s | %s |\n", metadata.HumanReadableName, metadata.Description, paramStr, tagStr))
+		// Parameters Table
+		if len(metadata.Parameters) > 0 {
+			builder.WriteString("### Parameters\n\n")
+			builder.WriteString("| Parameter Name | Display Name | Data Type | Default Value | Min Value | Max Value | Description |\n")
+			builder.WriteString("|----------------|--------------|-----------|---------------|-----------|-----------|-------------|\n")
+
+			// Sort parameters by DisplayName for consistent output
+			sort.Slice(metadata.Parameters, func(i, j int) bool {
+				return metadata.Parameters[i].DisplayName < metadata.Parameters[j].DisplayName
+			})
+
+			for _, p := range metadata.Parameters {
+				minVal := fmt.Sprintf("%v", p.MinValue)
+				if p.MinValue == nil {
+					minVal = "-"
+				}
+				maxVal := fmt.Sprintf("%v", p.MaxValue)
+				if p.MaxValue == nil {
+					maxVal = "-"
+				}
+
+				builder.WriteString(fmt.Sprintf("| %s | %s | %s | %v | %s | %s | %s |\n",
+					p.InternalName, p.DisplayName, p.DataType, p.DefaultValue, minVal, maxVal, p.Description))
+			}
+			builder.WriteString("\n") // Add a newline after the table for spacing
+		}
+		builder.WriteString("---\n\n") // Separator between effects
 	}
 
 	return os.WriteFile("EFFECTS.md", []byte(builder.String()), 0644)
