@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -14,11 +15,21 @@ type ActionConfig struct {
 	Params   map[string]interface{} `json:"params,omitempty"`
 }
 
+// MidiTriggerConfig represents a single MIDI message that triggers an event.
+type MidiTriggerConfig struct {
+	MessageType string `json:"message_type"` // e.g., "cc", "note_on", "note_off"
+	Number      int    `json:"number"`       // CC number or note number
+	Value       int    `json:"value"`        // CC value or velocity (0-127). Use -1 for any value.
+	EventName   string `json:"event_name"`   // The name of the event to trigger
+}
+
 // Config represents the overall application configuration.
 type Config struct {
-	Chains  []ChainConfig             `json:"chains"`
-	Globals GlobalsConfig            `json:"globals"`
-	Events  map[string][]ActionConfig `json:"events"`
+	Chains      []ChainConfig             `json:"chains"`
+	Globals     GlobalsConfig            `json:"globals"`
+	Events      map[string][]ActionConfig `json:"events"`
+	MidiTriggers []MidiTriggerConfig      `json:"midi_triggers,omitempty"`
+	MidiPortName string                 `json:"midi_port_name,omitempty"`
 }
 
 // ChainConfig represents the configuration for a single chain.
@@ -187,6 +198,17 @@ func LoadConfig(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config JSON: %w", err)
 	}
 
+	// Create a default config to merge missing values from
+	defaultCfg := CreateDefaultConfig()
+
+	// Merge default values into the loaded config
+	if mergeConfigs(&cfg, &defaultCfg) {
+		log.Println("Updating config file with missing default values.")
+		if err := SaveConfig(&cfg, filePath); err != nil {
+			log.Printf("Error saving updated config file: %v\n", err)
+		}
+	}
+
 	return &cfg, nil
 }
 
@@ -204,11 +226,51 @@ func SaveConfig(cfg *Config, filePath string) error {
 	return nil
 }
 
-// CreateDefaultConfig creates a default config.json file.
-func CreateDefaultConfig(filePath string) error {
+// mergeConfigs merges default values into the loaded config.
+// It returns true if any changes were made.
+func mergeConfigs(loaded *Config, defaults *Config) bool {
+	changed := false
+
+	// Merge Globals
+	if loaded.Globals.BPM == 0 {
+		loaded.Globals.BPM = defaults.Globals.BPM
+		changed = true
+	}
+	if loaded.Globals.Color1 == "" {
+		loaded.Globals.Color1 = defaults.Globals.Color1
+		changed = true
+	}
+	if loaded.Globals.Color2 == "" {
+		loaded.Globals.Color2 = defaults.Globals.Color2
+		changed = true
+	}
+	if loaded.Globals.Intensity == 0 {
+		loaded.Globals.Intensity = defaults.Globals.Intensity
+		changed = true
+	}
+
+	// Merge MidiTriggers
+	if len(loaded.MidiTriggers) == 0 && len(defaults.MidiTriggers) > 0 {
+		loaded.MidiTriggers = defaults.MidiTriggers
+		changed = true
+	}
+
+	// Merge MidiPortName
+	if loaded.MidiPortName == "" {
+		loaded.MidiPortName = defaults.MidiPortName
+		changed = true
+	}
+
+	// TODO: More sophisticated merging for Chains and Events if needed
+
+	return changed
+}
+
+// CreateDefaultConfig creates a default Config struct.
+func CreateDefaultConfig() Config {
 	trueVal := true
 	falseVal := false
-	defaultConfig := Config{
+	return Config{
 		Chains: []ChainConfig{
 			{
 				ID:       "mainChain",
@@ -306,16 +368,32 @@ func CreateDefaultConfig(filePath string) error {
 				},
 			},
 		},
+		MidiTriggers: []MidiTriggerConfig{
+			{
+				MessageType: "cc",
+				Number:      1,
+				Value:       -1, // Any value
+				EventName:   "strobe_on",
+			},
+			{
+				MessageType: "cc",
+				Number:      2,
+				Value:       -1, // Any value
+				EventName:   "strobe_off",
+			},
+			{
+				MessageType: "note_on",
+				Number:      60, // Middle C
+				Value:       -1, // Any velocity
+				EventName:   "rainbow_on",
+			},
+			{
+				MessageType: "note_off",
+				Number:      60, // Middle C
+				Value:       -1, // Any velocity
+				EventName:   "rainbow_off",
+			},
+		},
+		MidiPortName: "Midi Through Port-0",
 	}
-
-	data, err := json.MarshalIndent(defaultConfig, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal default config: %w", err)
-	}
-
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write default config file: %w", err)
-	}
-
-	return nil
 }

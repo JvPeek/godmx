@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 	"godmx/effects"
+	"godmx/midi"
 )
 
 func main() {
@@ -35,21 +36,27 @@ func main() {
 
 	fmt.Println("Starting godmx...")
 
-
-	// Check if config file exists, create if not
-	if _, err := os.Stat(*configPath); os.IsNotExist(err) {
-		fmt.Printf("Config file not found at '%s', creating a default one.\n", *configPath)
-		if err := config.CreateDefaultConfig(*configPath); err != nil {
-			fmt.Printf("Error creating default config file: %v\n", err)
-			return
-		}
-	}
-
 	// Load configuration
 	cfg, err := config.LoadConfig(*configPath)
 	if err != nil {
 		fmt.Printf("Error loading configuration: %v\n", err)
-		return
+		// If config file doesn't exist, create a default one and try to load again
+		if os.IsNotExist(err) {
+			fmt.Printf("Config file not found at '%s', creating a default one.\n", *configPath)
+			defaultCfg := config.CreateDefaultConfig()
+			if err := config.SaveConfig(&defaultCfg, *configPath); err != nil {
+				fmt.Printf("Error creating default config file: %v\n", err)
+				return
+			}
+			// Try loading again after creating default
+			cfg, err = config.LoadConfig(*configPath)
+			if err != nil {
+				fmt.Printf("Error loading configuration after creating default: %v\n", err)
+				return
+			}
+		} else {
+			return
+		}
 	}
 
 	// Create Orchestrator
@@ -93,10 +100,30 @@ func main() {
 		chain.StartLoop()
 	}
 
+	fmt.Printf("Checking MIDI triggers. Count: %d\n", len(cfg.MidiTriggers))
+	// Initialize and start MIDI controller if triggers are configured
+	if len(cfg.MidiTriggers) > 0 {
+		fmt.Println("MIDI triggers found. Initializing MIDI controller...")
+		midiController, err := midi.NewMidiController(orch, cfg.MidiTriggers, cfg.MidiPortName)
+		if err != nil {
+			fmt.Printf("Error initializing MIDI controller: %v\n", err)
+			// Continue without MIDI, or exit? For now, continue.
+		} else {
+			if err := midiController.Start(); err != nil {
+				fmt.Printf("Error starting MIDI controller: %v\n", err)
+				// Continue without MIDI, or exit? For now, continue.
+			} else {
+				defer midiController.Stop() // Ensure MIDI controller is stopped on exit
+				fmt.Println("MIDI controller started successfully.")
+			}
+		}
+	}
+
 	// Start the web UI server
 	webui.StartWebServer(orch, cfg, *webPort)
 
 	fmt.Println("Orchestrator running.")
+
 
 	// If an event is specified, trigger it now
 	if *eventName != "" {
@@ -114,3 +141,4 @@ func main() {
 		select {}
 	}
 }
+
