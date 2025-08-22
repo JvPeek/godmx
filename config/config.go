@@ -37,6 +37,7 @@ type EffectConfig struct {
 	Type    string                 `json:"type"`
 	Args    map[string]interface{} `json:"args"`
 	Enabled *bool                  `json:"enabled,omitempty"`
+	Group   string                 `json:"group,omitempty"`
 }
 
 // UnmarshalJSON for EffectConfig to default Enabled to true if not present
@@ -122,13 +123,34 @@ func (c *Config) ToggleEffectInChain(chainID, effectID string, enabled bool) err
 	if err != nil {
 		return err
 	}
+
+	var targetEffect *EffectConfig
 	for i := range chain.Effects {
 		if chain.Effects[i].ID == effectID {
-			chain.Effects[i].Enabled = &enabled
-			return nil
+			targetEffect = &chain.Effects[i]
+			break
 		}
 	}
-	return fmt.Errorf("effect with id '%s' not found in chain '%s'", effectID, chainID)
+
+	if targetEffect == nil {
+		return fmt.Errorf("effect with id '%s' not found in chain '%s'", effectID, chainID)
+	}
+
+	// If we are enabling this effect, disable all other effects in the same group
+	if enabled && targetEffect.Group != "" {
+		falseVal := false
+		for i := range chain.Effects {
+			effect := &chain.Effects[i]
+			if effect.ID != effectID && effect.Group == targetEffect.Group && *effect.Enabled {
+				effect.Enabled = &falseVal
+			}
+		}
+	}
+
+	// Set the enabled state of the target effect
+	targetEffect.Enabled = &enabled
+
+	return nil
 }
 
 // SetGlobal sets a global parameter.
@@ -185,25 +207,34 @@ func SaveConfig(cfg *Config, filePath string) error {
 // CreateDefaultConfig creates a default config.json file.
 func CreateDefaultConfig(filePath string) error {
 	trueVal := true
+	falseVal := false
 	defaultConfig := Config{
 		Chains: []ChainConfig{
 			{
 				ID:       "mainChain",
 				Priority: 1,
 				TickRate: 40,
-				NumLamps: 50,
+				NumLamps: 93,
 				Effects: []EffectConfig{
 					{
 						ID:      "defaultRainbow",
 						Type:    "rainbow",
 						Args:    make(map[string]interface{}),
 						Enabled: &trueVal,
+						Group:   "basic_color",
+					},
+					{
+						ID:      "defaultSolidColor",
+						Type:    "solidColor",
+						Args:    make(map[string]interface{}),
+						Enabled: &falseVal,
+						Group:   "basic_color",
 					},
 				},
 				Output: OutputConfig{
 					Type: "artnet",
 					Args: map[string]interface{}{
-						"ip": "127.0.0.1",
+						"ip": "192.168.125.153",
 					},
 					ChannelMapping:     "RGB",
 					NumChannelsPerLamp: 3,
@@ -249,6 +280,22 @@ func CreateDefaultConfig(filePath string) error {
 					Type:     "toggle_effect",
 					ChainID:  "mainChain",
 					EffectID: "defaultRainbow",
+					Params:   map[string]interface{}{"enabled": true},
+				},
+			},
+			"solid_color_off": {
+				{
+					Type:     "toggle_effect",
+					ChainID:  "mainChain",
+					EffectID: "defaultSolidColor",
+					Params:   map[string]interface{}{"enabled": false},
+				},
+			},
+			"solid_color_on": {
+				{
+					Type:     "toggle_effect",
+					ChainID:  "mainChain",
+					EffectID: "defaultSolidColor",
 					Params:   map[string]interface{}{"enabled": true},
 				},
 			},

@@ -6,8 +6,8 @@ import (
 	"godmx/dmx"
 	"godmx/effects"
 	"godmx/types"
-	sync "sync"
-	time "time"
+	"sync"
+	"time"
 )
 
 // Chain represents a sequence of effects and an output.
@@ -50,31 +50,81 @@ func (c *Chain) SetDirty(dirty bool) {
 func (c *Chain) rebuildEffectsFromConfig() error {
 	fmt.Printf("Rebuilding effects for chain '%s'...\n", c.ID)
 	c.Effects = []types.Effect{}
-	for _, effectConfig := range c.config.Effects {
-		if effectConfig.Enabled != nil && !*effectConfig.Enabled {
-			continue // Skip disabled effects
+
+	activeGroups := make(map[string]bool) // To track which groups already have an active effect
+
+	for i := range c.config.Effects {
+		effectConfig := &c.config.Effects[i] // Get a pointer to modify the original config
+
+		// Apply group rules: only one effect per group can be enabled
+		if effectConfig.Group != "" {
+			if activeGroups[effectConfig.Group] {
+				// If group is already active, disable this effect
+				falseVal := false
+				if effectConfig.Enabled == nil || *effectConfig.Enabled { // Only modify if it was enabled or nil
+					effectConfig.Enabled = &falseVal
+					fmt.Printf("  - Disabling effect '%s' in group '%s' (group already active)\n", effectConfig.ID, effectConfig.Group)
+				}
+			} else if *effectConfig.Enabled { // If this effect is enabled and its group is not yet active
+				activeGroups[effectConfig.Group] = true // Mark group as active
+				fmt.Printf("  - Enabling effect '%s' in group '%s' (first active in group)\n", effectConfig.ID, effectConfig.Group)
+			}
 		}
 
-		constructor, ok := effects.GetEffectConstructor(effectConfig.Type)
-		if !ok {
-			return fmt.Errorf("unknown effect type: %s", effectConfig.Type)
-		}
+		// Only create the effect instance if it's enabled after group rules
+		if *effectConfig.Enabled {
+			constructor, ok := effects.GetEffectConstructor(effectConfig.Type)
+			if !ok {
+				return fmt.Errorf("unknown effect type: %s", effectConfig.Type)
+			}
 
-		// Make sure to pass the ID to the constructor if it needs it
-		args := effectConfig.Args
-		if args == nil {
-			args = make(map[string]interface{})
-		}
-		args["id"] = effectConfig.ID
+			args := effectConfig.Args
+			if args == nil {
+				args = make(map[string]interface{})
+			}
+			args["id"] = effectConfig.ID // Pass ID to constructor
 
-		effect, err := constructor(args)
-		if err != nil {
-			return fmt.Errorf("error creating effect '%s': %w", effectConfig.Type, err)
+			effect, err := constructor(args)
+			if err != nil {
+				return fmt.Errorf("error creating effect '%s': %w", effectConfig.Type, err)
+			}
+			c.Effects = append(c.Effects, effect)
 		}
-		c.Effects = append(c.Effects, effect)
 	}
 	c.isDirty = false
 	return nil
+}
+
+// EnforceGroupRules is called when an effect's enabled state is changed via an event.
+// It ensures that only one effect in a group is enabled in the config.
+func (c *Chain) EnforceGroupRules(triggeredEffectID string) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	var triggeredEffectConfig *config.EffectConfig
+	for i := range c.config.Effects {
+		if c.config.Effects[i].ID == triggeredEffectID {
+			triggeredEffectConfig = &c.config.Effects[i]
+			break
+		}
+	}
+
+	if triggeredEffectConfig == nil || triggeredEffectConfig.Group == "" || !*triggeredEffectConfig.Enabled {
+		// Not a grouped effect, or not enabled, no rules to enforce
+		return
+	}
+
+	// Disable all other effects in the same group
+	falseVal := false
+	for i := range c.config.Effects {
+		effectConfig := &c.config.Effects[i]
+		if effectConfig.ID != triggeredEffectID && effectConfig.Group == triggeredEffectConfig.Group && *effectConfig.Enabled {
+				effectConfig.Enabled = &falseVal
+				fmt.Printf("  - Disabling effect '%s' due to group rule enforcement\n", effectConfig.ID)
+		}
+	}
+	// Mark chain as dirty to trigger rebuild with updated config
+	c.isDirty = true
 }
 
 // Tick processes the chain's effects and sends data to the output.
