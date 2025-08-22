@@ -1,0 +1,46 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+}
+
+h1 {
+    color: #007acc;
+}
+
+#chains-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.chain-box {
+    border: 1px solid #007acc;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #252526;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 250px;
+}
+
+.chain-box h2 {
+    color: #9cdcfe;
+    margin-top: 0;
+}
+
+.chain-box p {
+    margin: 5px 0;
+}
+
+.chain-box ul {
+    list-style: none;
+    padding: 0;
+}
+
+.chain-box ul li {
+    background-color: #3c3c3c;
+    margin-bottom: 3px;
+    padding: 5px;
+    border-radius: 4px;
+}

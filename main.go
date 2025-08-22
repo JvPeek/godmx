@@ -8,6 +8,7 @@ import (
 	"godmx/orchestrator"
 	"godmx/outputs"
 	"godmx/utils"
+	"godmx/webui"
 	"os"
 	"time"
 )
@@ -16,6 +17,7 @@ func main() {
 	// Command-line flags
 	debug := flag.Bool("debug", false, "Run in debug mode (exits after 10 seconds)")
 	configPath := flag.String("config", "config.json", "Path to the configuration file")
+	webPort := flag.Int("web-port", 8080, "Port for the web UI")
 	flag.Parse()
 
 	fmt.Println("Starting godmx...")
@@ -124,6 +126,9 @@ func main() {
 		// Start the Chain's loop
 		mainChain.StartLoop() // Start each chain's loop independently
 	}
+
+	// Start the web UI server
+	webui.StartWebServer(orch, cfg, *webPort)
 
 	fmt.Println("Orchestrator running.")
 
