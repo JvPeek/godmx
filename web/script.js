@@ -3,9 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const bpmDownButton = document.getElementById('bpm-down');
     const bpmUpButton = document.getElementById('bpm-up');
     const chainsContainer = document.getElementById('chains-container');
+    const eventsContainer = document.getElementById('events-container'); // New: Get events container
 
     let currentBPM = 0;
     let currentChains = [];
+    let currentEvents = []; // New: To track current events
 
     const renderArgs = (args) => {
         if (!args || Object.keys(args).length === 0) {
@@ -38,8 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     
                     ${chain.Effects.map(effect => `
-                        <div class="chain-element">
-                            <h4>Effect: ${effect.Type}</h4>
+                        <div class="chain-element ${effect.Enabled ? '' : 'disabled'}">
+                            <h4>Effect: ${effect.Type} ${effect.Enabled ? '(Enabled)' : '(Disabled)'}</h4>
                             ${renderArgs(effect.Args)}
                         </div>
                     `).join('')}
@@ -56,46 +58,85 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const fetchBPM = () => {
-        fetch('/api/bpm')
-            .then(response => response.json())
-            .then(data => {
-                if (currentBPM !== data.bpm) {
-                    currentBPM = data.bpm;
-                    bpmValueSpan.textContent = currentBPM.toFixed(2);
-                }
-            })
-            .catch(error => console.error('Error fetching BPM:', error));
+    const fetchBPM = async () => {
+        try {
+            const response = await fetch('/api/bpm');
+            const data = await response.json();
+            if (currentBPM !== data.bpm) {
+                currentBPM = data.bpm;
+                bpmValueSpan.textContent = currentBPM.toFixed(2);
+            }
+        } catch (error) {
+            console.error('Error fetching BPM:', error);
+        }
     };
 
-    const fetchChains = () => {
-        fetch('/api/chains')
-            .then(response => response.json())
-            .then(chains => {
-                // Simple deep comparison for now. For complex objects, a library might be better.
-                if (JSON.stringify(currentChains) !== JSON.stringify(chains)) {
-                    currentChains = chains;
-                    renderChains(currentChains);
-                }
-            })
-            .catch(error => console.error('Error fetching chains:', error));
+    const fetchChains = async () => {
+        try {
+            const response = await fetch('/api/chains');
+            const chains = await response.json();
+            if (JSON.stringify(currentChains) !== JSON.stringify(chains)) {
+                currentChains = chains;
+                renderChains(currentChains);
+            }
+        } catch (error) {
+            console.error('Error fetching chains:', error);
+        }
     };
 
-    const updateBPM = (newBPM) => {
-        fetch('/api/bpm', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ bpm: newBPM }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Update immediately after successful POST, then polling will keep it consistent
+    // New: Function to fetch events and render buttons
+    const fetchEventsAndRenderButtons = async () => {
+        try {
+            const response = await fetch('/api/events');
+            const events = await response.json();
+            // Only re-render if events have changed
+            if (JSON.stringify(currentEvents) !== JSON.stringify(events)) {
+                currentEvents = events;
+                eventsContainer.innerHTML = ''; // Clear existing buttons
+                events.forEach(eventName => {
+                    const button = document.createElement('button');
+                    button.textContent = eventName.replace(/_/g, ' '); // Make it more readable
+                    button.className = 'event-button';
+                    button.addEventListener('click', async () => {
+                        try {
+                            const triggerResponse = await fetch('/api/trigger', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ eventName: eventName }),
+                            });
+                            const result = await triggerResponse.json();
+                            console.log(`Event '${eventName}' triggered:`, result);
+                            // After triggering, refresh all data to see changes
+                            refreshAll();
+                        } catch (error) {
+                            console.error(`Error triggering event '${eventName}':`, error);
+                        }
+                    });
+                    eventsContainer.appendChild(button);
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching events:', error);
+        }
+    };
+
+    const updateBPM = async (newBPM) => {
+        try {
+            const response = await fetch('/api/bpm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ bpm: newBPM }),
+            });
+            const data = await response.json();
             currentBPM = data.bpm;
             bpmValueSpan.textContent = currentBPM.toFixed(2);
-        })
-        .catch(error => console.error('Error updating BPM:', error));
+        } catch (error) {
+            console.error('Error updating BPM:', error);
+        }
     };
 
     bpmDownButton.addEventListener('click', () => {
@@ -106,11 +147,14 @@ document.addEventListener('DOMContentLoaded', () => {
         updateBPM(currentBPM + 5);
     });
 
-    // Initial fetches
-    fetchBPM();
-    fetchChains();
+    // New: Function to refresh all data
+    const refreshAll = () => {
+        fetchBPM();
+        fetchChains();
+        fetchEventsAndRenderButtons();
+    };
 
-    // Poll every second
-    setInterval(fetchBPM, 1000);
-    setInterval(fetchChains, 1000);
+    // Initial fetch and poll every second
+    refreshAll();
+    setInterval(refreshAll, 1000);
 });

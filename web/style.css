@@ -75,10 +75,8 @@ h1 {
 }
 
 .chain-box ul li {
-    background-color: #3c3c3c;
-    margin-bottom: 3px;
-    padding: 5px;
-    border-radius: 4px;
+    list-style: none;
+    padding: 0;
 }
 
 /* Responsive adjustments */
@@ -120,4 +118,8 @@ h1 {
     margin-bottom: 2px;
     padding: 3px 5px;
     border-radius: 3px;
+}
+
+.chain-element.disabled {
+    opacity: 0.5;
 }
