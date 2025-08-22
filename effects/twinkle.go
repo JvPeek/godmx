@@ -1,7 +1,6 @@
 package effects
 
 import (
-	"fmt"
 	"godmx/dmx"
 	"godmx/orchestrator"
 	"math/rand"
@@ -9,8 +8,9 @@ import (
 )
 
 func init() {
-	RegisterEffect("twinkle", func(args map[string]interface{}) (orchestrator.Effect, error) {
-		return NewTwinkle(args)
+	RegisterEffect("twinkle", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
+		effect, modifiedArgs, err := NewTwinkle(args)
+		return effect, modifiedArgs, err
 	})
 }
 
@@ -22,10 +22,14 @@ type Twinkle struct {
 }
 
 // NewTwinkle creates a new Twinkle effect.
-func NewTwinkle(args map[string]interface{}) (*Twinkle, error) {
+func NewTwinkle(args map[string]interface{}) (*Twinkle, map[string]interface{}, error) {
+	if args == nil {
+		args = make(map[string]interface{})
+	}
 	percentage, ok := args["percentage"].(float64)
 	if !ok {
-		return nil, fmt.Errorf("invalid or missing 'percentage' argument for twinkle effect")
+		percentage = 0.1 // Default to 10% twinkle
+		args["percentage"] = percentage
 	}
 
 	src := rand.NewSource(time.Now().UnixNano())
@@ -35,7 +39,7 @@ func NewTwinkle(args map[string]interface{}) (*Twinkle, error) {
 		Percentage: percentage,
 		source:     src,
 		generator:  gen,
-	}, nil
+	}, args, nil
 }
 
 // Process applies the twinkle effect to the lamps.

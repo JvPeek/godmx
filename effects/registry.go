@@ -6,7 +6,7 @@ import (
 )
 
 // EffectConstructor is a function type that constructs an Effect from a map of arguments.
-type EffectConstructor func(args map[string]interface{}) (orchestrator.Effect, error)
+type EffectConstructor func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error)
 
 var (
 	effectRegistry = make(map[string]EffectConstructor)

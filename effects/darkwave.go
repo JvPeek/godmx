@@ -7,8 +7,9 @@ import (
 )
 
 func init() {
-	RegisterEffect("darkwave", func(args map[string]interface{}) (orchestrator.Effect, error) {
-		return NewDarkWave(args)
+	RegisterEffect("darkwave", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
+		effect, modifiedArgs, err := NewDarkWave(args)
+		return effect, modifiedArgs, err
 	})
 }
 
@@ -20,18 +21,23 @@ func init() {
 }
 
 // NewDarkWave creates a new DarkWave effect.
-func NewDarkWave(args map[string]interface{}) (*DarkWave, error) {
+func NewDarkWave(args map[string]interface{}) (*DarkWave, map[string]interface{}, error) {
+	if args == nil {
+		args = make(map[string]interface{})
+	}
 	percentage, ok := args["percentage"].(float64)
 	if !ok {
 		percentage = 0.5 // Default to 50%
+		args["percentage"] = percentage
 	}
 
 	speed, ok := args["speed"].(float64)
 	if !ok {
 		speed = 1.0 // Default to 1.0
+		args["speed"] = speed
 	}
 
-	return &DarkWave{Percentage: percentage, Speed: speed}, nil
+	return &DarkWave{Percentage: percentage, Speed: speed}, args, nil
 }
 
 // Process applies the DarkWave effect to the lamp strip.

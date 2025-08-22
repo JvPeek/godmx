@@ -8,8 +8,8 @@ import (
 )
 
 func init() {
-	RegisterEffect("gradient", func(args map[string]interface{}) (orchestrator.Effect, error) {
-		return &Gradient{}, nil
+	RegisterEffect("gradient", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
+		return &Gradient{}, args, nil
 	})
 }
 

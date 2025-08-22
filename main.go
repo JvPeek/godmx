@@ -10,6 +10,7 @@ import (
 	"godmx/utils"
 	"godmx/webui"
 	"os"
+	"reflect"
 	"time"
 )
 
@@ -37,6 +38,8 @@ func main() {
 		fmt.Printf("Error loading configuration: %v\n", err)
 		return
 	}
+
+	var configModified bool // Flag to track if config was modified by applying defaults
 
 	// Create Orchestrator
 	orch := orchestrator.NewOrchestrator()
@@ -68,7 +71,7 @@ func main() {
 		fmt.Println("No chains defined in configuration.")
 		return
 	}
-	for _, chainConfig := range cfg.Chains { // Iterate over all chain configs
+	for chainIdx, chainConfig := range cfg.Chains { // Iterate over all chain configs
 		// Create Output
 		var output orchestrator.Output
 		channelMapping := chainConfig.Output.ChannelMapping
@@ -104,7 +107,7 @@ func main() {
 		mainChain := orchestrator.NewChain(chainConfig.ID, chainConfig.Priority, chainConfig.TickRate, output, chainConfig.NumLamps, orch, channelMapping, numChannelsPerLamp)
 
 		// Create Effects
-		for _, effectConfig := range chainConfig.Effects {
+		for i, effectConfig := range chainConfig.Effects {
 			var effect orchestrator.Effect
 			constructor, ok := effects.GetEffectConstructor(effectConfig.Type)
 			if !ok {
@@ -112,10 +115,17 @@ func main() {
 				return
 			}
 			var err error
-			effect, err = constructor(effectConfig.Args)
+			var modifiedArgs map[string]interface{}
+			effect, modifiedArgs, err = constructor(effectConfig.Args)
 			if err != nil {
 				fmt.Printf("Error creating effect %s for chain %s: %v\n", effectConfig.Type, chainConfig.ID, err)
 				return
+			}
+
+			// Check if args were modified by the effect constructor (i.e., defaults were applied)
+			if !reflect.DeepEqual(effectConfig.Args, modifiedArgs) {
+				cfg.Chains[chainIdx].Effects[i].Args = modifiedArgs
+				configModified = true
 			}
 			mainChain.AddEffect(effect)
 		}
@@ -125,6 +135,14 @@ func main() {
 
 		// Start the Chain's loop
 		mainChain.StartLoop() // Start each chain's loop independently
+	}
+
+	// Save config if any defaults were applied
+	if configModified {
+		fmt.Printf("Saving updated configuration to %s (defaults applied).\n", *configPath)
+		if err := config.SaveConfig(cfg, *configPath); err != nil {
+			fmt.Printf("Error saving updated config: %v\n", err)
+		}
 	}
 
 	// Start the web UI server

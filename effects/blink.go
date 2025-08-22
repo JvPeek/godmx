@@ -6,8 +6,8 @@ import (
 )
 
 func init() {
-	RegisterEffect("blink", func(args map[string]interface{}) (orchestrator.Effect, error) {
-		return NewBlink(), nil
+	RegisterEffect("blink", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
+		return NewBlink(), args, nil
 	})
 }
 

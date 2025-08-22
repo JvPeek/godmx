@@ -6,8 +6,8 @@ import (
 )
 
 func init() {
-	RegisterEffect("whiteout", func(args map[string]interface{}) (orchestrator.Effect, error) {
-		return NewWhiteout(), nil
+	RegisterEffect("whiteout", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
+		return NewWhiteout(), args, nil
 	})
 }
 

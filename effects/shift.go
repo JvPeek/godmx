@@ -8,8 +8,9 @@ import (
 )
 
 func init() {
-	RegisterEffect("shift", func(args map[string]interface{}) (orchestrator.Effect, error) {
-		return NewShift(args)
+	RegisterEffect("shift", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
+		effect, modifiedArgs, err := NewShift(args)
+		return effect, modifiedArgs, err
 	})
 }
 
@@ -20,18 +21,22 @@ type Shift struct {
 }
 
 // NewShift creates a new Shift effect.
-func NewShift(args map[string]interface{}) (*Shift, error) {
+func NewShift(args map[string]interface{}) (*Shift, map[string]interface{}, error) {
+	if args == nil {
+		args = make(map[string]interface{})
+	}
 	direction, ok := args["direction"].(string)
 	if !ok {
 		direction = "left" // Default direction
+		args["direction"] = direction
 	}
 
 	if direction != "left" && direction != "right" {
-		return nil, fmt.Errorf("invalid direction for shift effect: %s. Must be 'left' or 'right'", direction)
+		return nil, args, fmt.Errorf("invalid direction for shift effect: %s. Must be 'left' or 'right'", direction)
 	}
 
 	return &Shift{Direction: direction},
-		nil
+		args, nil
 }
 
 // Process applies the shift effect to the lamps.

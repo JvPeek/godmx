@@ -6,8 +6,8 @@ import (
 )
 
 func init() {
-	RegisterEffect("solidColor", func(args map[string]interface{}) (orchestrator.Effect, error) {
-		return &SolidColor{}, nil
+	RegisterEffect("solidColor", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
+		return &SolidColor{}, args, nil
 	})
 }
 
