@@ -2,13 +2,13 @@ package effects
 
 import (
 	"godmx/dmx"
-	"godmx/orchestrator"
+	"godmx/types"
 	"math"
 	"godmx/utils"
 )
 
 func init() {
-	RegisterEffect("gradient", func(args map[string]interface{}) (orchestrator.Effect, error) {
+	RegisterEffect("gradient", func(args map[string]interface{}) (types.Effect, error) {
 		return &Gradient{}, nil
 	})
 	RegisterEffectParameters("gradient", make(map[string]interface{}))
@@ -20,7 +20,7 @@ type Gradient struct {
 }
 
 // Process applies the gradient effect to the lamps using globals.Color1 and globals.Color2.
-func (g *Gradient) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
+func (g *Gradient) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	numLamps := float64(len(lamps))
 
 	// Convert Color1 and Color2 to HSV for interpolation

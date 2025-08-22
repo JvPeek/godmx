@@ -3,12 +3,12 @@ package effects
 import (
 	"fmt"
 	"godmx/dmx"
-	"godmx/orchestrator"
+	"godmx/types"
 	"math"
 )
 
 func init() {
-	RegisterEffect("shift", func(args map[string]interface{}) (orchestrator.Effect, error) {
+	RegisterEffect("shift", func(args map[string]interface{}) (types.Effect, error) {
 		return NewShift(args)
 	})
 	RegisterEffectParameters("shift", map[string]interface{}{"direction": "left"})
@@ -32,7 +32,7 @@ func NewShift(args map[string]interface{}) (*Shift, error) {
 }
 
 // Process applies the shift effect to the lamps.
-func (s *Shift) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
+func (s *Shift) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	numLamps := float64(len(lamps))
 
 	step := globals.BeatProgress * numLamps // Shift one full length of lamps per beat

@@ -4,21 +4,20 @@ import (
 	"flag"
 	"fmt"
 	"godmx/config"
-	"godmx/effects"
 	"godmx/orchestrator"
 	"godmx/outputs"
 	"godmx/utils"
 	"godmx/webui"
 	"os"
-	"reflect"
 	"time"
 )
 
 func main() {
 	// Command-line flags
-	debug := flag.Bool("debug", false, "Run in debug mode (exits after 10 seconds)")
+	debug := flag.Bool("debug", false, "Run in debug mode (exits after a short duration)")
 	configPath := flag.String("config", "config.json", "Path to the configuration file")
 	webPort := flag.Int("web-port", 8080, "Port for the web UI")
+	eventName := flag.String("event", "", "Name of an event to trigger on startup")
 	flag.Parse()
 
 	fmt.Println("Starting godmx...")
@@ -39,51 +38,23 @@ func main() {
 		return
 	}
 
-	var configModified bool // Flag to track if config was modified by applying defaults
-
 	// Create Orchestrator
-	orch := orchestrator.NewOrchestrator()
+	orch := orchestrator.NewOrchestrator(cfg)
 
-	// Set global parameters from config
+	// Set initial global parameters from config
 	orch.SetBPM(cfg.Globals.BPM)
-
-	// Parse and set Color1
-	color1, err := utils.ParseHexColor(cfg.Globals.Color1)
-	if err != nil {
-		fmt.Printf("Error parsing Color1 from config: %v\n", err)
-		return
-	}
+	color1, _ := utils.ParseHexColor(cfg.Globals.Color1)
 	orch.SetColor1(color1)
-
-	// Parse and set Color2
-	color2, err := utils.ParseHexColor(cfg.Globals.Color2)
-	if err != nil {
-		fmt.Printf("Error parsing Color2 from config: %v\n", err)
-		return
-	}
+	color2, _ := utils.ParseHexColor(cfg.Globals.Color2)
 	orch.SetColor2(color2)
-
 	orch.SetIntensity(cfg.Globals.Intensity)
 
-	// --- Build Chains, Effects, and Outputs from config ---
-	// Assuming only one chain for now, as per config.json example
-	if len(cfg.Chains) == 0 {
-		fmt.Println("No chains defined in configuration.")
-		return
-	}
-	for chainIdx, chainConfig := range cfg.Chains { // Iterate over all chain configs
-		// Create Output
+	// --- Build Chains from config ---
+	for i := range cfg.Chains {
+		chainConfig := &cfg.Chains[i]
+
+		// Create Output for the chain
 		var output orchestrator.Output
-		channelMapping := chainConfig.Output.ChannelMapping
-		if channelMapping == "" {
-			channelMapping = "RGBW" // Default to RGBW
-		}
-
-		numChannelsPerLamp := chainConfig.Output.NumChannelsPerLamp
-		if numChannelsPerLamp == 0 {
-			numChannelsPerLamp = 4 // Default to 4 channels per lamp
-		}
-
 		switch chainConfig.Output.Type {
 		case "artnet":
 			ip, ok := chainConfig.Output.Args["ip"].(string)
@@ -91,8 +62,7 @@ func main() {
 				fmt.Printf("ArtNet output 'ip' argument missing or invalid for chain %s.\n", chainConfig.ID)
 				return
 			}
-
-			artNetOutput, err := outputs.NewArtNetOutput(ip, *debug, channelMapping, numChannelsPerLamp)
+			artNetOutput, err := outputs.NewArtNetOutput(ip, *debug, chainConfig.Output.ChannelMapping, chainConfig.Output.NumChannelsPerLamp)
 			if err != nil {
 				fmt.Printf("Error creating Art-Net output for chain %s: %v\n", chainConfig.ID, err)
 				return
@@ -103,64 +73,10 @@ func main() {
 			return
 		}
 
-		// Create Chain
-		mainChain := orchestrator.NewChain(chainConfig.ID, chainConfig.Priority, chainConfig.TickRate, output, chainConfig.NumLamps, orch, channelMapping, numChannelsPerLamp)
-
-		// Create Effects
-		for i, effectConfig := range chainConfig.Effects {
-			var effect orchestrator.Effect
-			constructor, ok := effects.GetEffectConstructor(effectConfig.Type)
-			if !ok {
-				fmt.Printf("Unknown effect type: %s for chain %s. Available effects are: %v.\n", effectConfig.Type, chainConfig.ID, effects.GetAvailableEffects())
-				return
-			}
-			var err error
-			var modifiedArgs map[string]interface{}
-
-            // Get default parameters for the effect
-            defaultParams, ok := effects.GetEffectParameters(effectConfig.Type)
-            if !ok {
-                // For now, let's assume it's okay if there are no default params
-                defaultParams = make(map[string]interface{})
-            }
-
-            // Merge effectConfig.Args with defaultParams to create modifiedArgs
-            // Start with defaultParams, then override with effectConfig.Args
-            modifiedArgs = make(map[string]interface{})
-            for k, v := range defaultParams {
-                modifiedArgs[k] = v
-            }
-            for k, v := range effectConfig.Args {
-                modifiedArgs[k] = v
-            }
-
-			effect, err = constructor(modifiedArgs) // Pass the merged args to the constructor
-			if err != nil {
-				fmt.Printf("Error creating effect %s for chain %s: %v\n", effectConfig.Type, chainConfig.ID, err)
-				return
-			}
-
-			// Check if args were modified by the effect constructor (i.e., defaults were applied)
-			if !reflect.DeepEqual(effectConfig.Args, modifiedArgs) {
-				cfg.Chains[chainIdx].Effects[i].Args = modifiedArgs
-				configModified = true
-			}
-			mainChain.AddEffect(effect)
-		}
-
-		// Add Chain to Orchestrator
-		orch.AddChain(mainChain)
-
-		// Start the Chain's loop
-		mainChain.StartLoop() // Start each chain's loop independently
-	}
-
-	// Save config if any defaults were applied
-	if configModified {
-		fmt.Printf("Saving updated configuration to %s (defaults applied).\n", *configPath)
-		if err := config.SaveConfig(cfg, *configPath); err != nil {
-			fmt.Printf("Error saving updated config: %v\n", err)
-		}
+		// Create and add the chain
+		chain := orchestrator.NewChain(chainConfig, orch, output)
+		orch.AddChain(chain)
+		chain.StartLoop()
 	}
 
 	// Start the web UI server
@@ -168,15 +84,19 @@ func main() {
 
 	fmt.Println("Orchestrator running.")
 
+	// If an event is specified, trigger it now
+	if *eventName != "" {
+		orch.TriggerEvent(*eventName)
+	}
+
 	if *debug {
-		fmt.Println("Debug mode: Exiting in 10 seconds...")
+		fmt.Println("Debug mode: Running for 10 seconds...")
 		select {
 		case <-time.After(10 * time.Second):
 			fmt.Println("Exiting debug mode.")
 		}
 	} else {
 		fmt.Println("Press Ctrl+C to exit.")
-		// Keep main goroutine alive
 		select {}
 	}
 }

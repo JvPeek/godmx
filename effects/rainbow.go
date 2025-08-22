@@ -2,13 +2,13 @@ package effects
 
 import (
 	"godmx/dmx"
-	"godmx/orchestrator"
+	"godmx/types"
 	"godmx/utils"
 	"math"
 )
 
 func init() {
-	RegisterEffect("rainbow", func(args map[string]interface{}) (orchestrator.Effect, error) {
+	RegisterEffect("rainbow", func(args map[string]interface{}) (types.Effect, error) {
 		return NewRainbow(), nil
 	})
 	RegisterEffectParameters("rainbow", make(map[string]interface{}))
@@ -25,7 +25,7 @@ func NewRainbow() *Rainbow {
 }
 
 // Process applies the rainbow effect to the lamps.
-func (r *Rainbow) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
+func (r *Rainbow) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	numLamps := float64(len(lamps))
 	// const fixedTickRate = 40.0 // Assuming 40 FPS as per current configs
 

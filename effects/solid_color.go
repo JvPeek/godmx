@@ -2,11 +2,11 @@ package effects
 
 import (
 	"godmx/dmx"
-	"godmx/orchestrator"
+	"godmx/types"
 )
 
 func init() {
-	RegisterEffect("solidColor", func(args map[string]interface{}) (orchestrator.Effect, error) {
+	RegisterEffect("solidColor", func(args map[string]interface{}) (types.Effect, error) {
 		return &SolidColor{}, nil
 	})
 	RegisterEffectParameters("solidColor", make(map[string]interface{}))
@@ -18,7 +18,7 @@ type SolidColor struct {
 }
 
 // Process applies the solid color to the lamps using globals.Color1.
-func (s *SolidColor) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
+func (s *SolidColor) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	for i := range lamps {
 		lamps[i].R = globals.Color1.R
 		lamps[i].G = globals.Color1.G

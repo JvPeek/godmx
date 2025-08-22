@@ -2,12 +2,12 @@ package effects
 
 import (
 	"godmx/dmx"
-	"godmx/orchestrator"
+	"godmx/types"
 	"math"
 )
 
 func init() {
-	RegisterEffect("darkwave", func(args map[string]interface{}) (orchestrator.Effect, error) {
+	RegisterEffect("darkwave", func(args map[string]interface{}) (types.Effect, error) {
 		return NewDarkWave(args)
 	})
 	RegisterEffectParameters("darkwave", map[string]interface{}{"percentage": 0.5, "speed": 1.0})
@@ -28,7 +28,7 @@ func NewDarkWave(args map[string]interface{}) (*DarkWave, error) {
 }
 
 // Process applies the DarkWave effect to the lamp strip.
-func (dw *DarkWave) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
+func (dw *DarkWave) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	step := globals.BeatProgress * 2 * math.Pi * dw.Speed
 	for i := 0; i < len(lamps); i++ {
 		sinValue := (math.Sin(float64(i)/float64(len(lamps))*2*math.Pi + step) + 1) / 2

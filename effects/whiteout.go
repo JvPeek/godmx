@@ -2,11 +2,11 @@ package effects
 
 import (
 	"godmx/dmx"
-	"godmx/orchestrator"
+	"godmx/types"
 )
 
 func init() {
-	RegisterEffect("whiteout", func(args map[string]interface{}) (orchestrator.Effect, error) {
+	RegisterEffect("whiteout", func(args map[string]interface{}) (types.Effect, error) {
 		return NewWhiteout(), nil
 	})
 	RegisterEffectParameters("whiteout", make(map[string]interface{}))
@@ -23,7 +23,7 @@ func NewWhiteout() *Whiteout {
 }
 
 // Process applies the whiteout effect to the lamps.
-func (w *Whiteout) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
+func (w *Whiteout) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	for i := range lamps {
 		if numChannelsPerLamp == 3 && channelMapping == "RGB" {
 			lamps[i] = dmx.Lamp{R: 255, G: 255, B: 255, W: 0} // Set RGB to white, W to 0

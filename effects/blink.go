@@ -2,11 +2,11 @@ package effects
 
 import (
 	"godmx/dmx"
-	"godmx/orchestrator"
+	"godmx/types"
 )
 
 func init() {
-	RegisterEffect("blink", func(args map[string]interface{}) (orchestrator.Effect, error) {
+	RegisterEffect("blink", func(args map[string]interface{}) (types.Effect, error) {
 		return NewBlink(args), nil
 	})
 	RegisterEffectParameters("blink", map[string]interface{}{
@@ -35,7 +35,7 @@ func NewBlink(args map[string]interface{}) *Blink {
 }
 
 // Process applies the blink effect to the lamps.
-func (b *Blink) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
+func (b *Blink) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	var targetColor dmx.Lamp
 
 	// Calculate the current segment within the beat, considering the divider

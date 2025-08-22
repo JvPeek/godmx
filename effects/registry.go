@@ -2,11 +2,11 @@ package effects
 
 import (
 	"fmt"
-	"godmx/orchestrator"
+	"godmx/types"
 )
 
 // EffectConstructor is a function type that constructs an Effect from a map of arguments.
-type EffectConstructor func(args map[string]interface{}) (orchestrator.Effect, error)
+type EffectConstructor func(args map[string]interface{}) (types.Effect, error)
 
 var (
 	effectRegistry = make(map[string]EffectConstructor)

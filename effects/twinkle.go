@@ -1,15 +1,14 @@
 package effects
 
 import (
-	
 	"godmx/dmx"
-	"godmx/orchestrator"
+	"godmx/types"
 	"math/rand"
 	"time"
 )
 
 func init() {
-	RegisterEffect("twinkle", func(args map[string]interface{}) (orchestrator.Effect, error) {
+	RegisterEffect("twinkle", func(args map[string]interface{}) (types.Effect, error) {
 		return NewTwinkle(args)
 	})
 	RegisterEffectParameters("twinkle", map[string]interface{}{"percentage": 0.1})
@@ -17,9 +16,9 @@ func init() {
 
 // Twinkle randomly turns a percentage of lamps to white.
 type Twinkle struct {
-	Percentage float64
-	source     rand.Source
-	generator  *rand.Rand
+	Percentage        float64
+	source            rand.Source
+	generator         *rand.Rand
 	lastBeatTriggered bool // New: Flag to track if twinkle was triggered on the current beat
 }
 
@@ -31,21 +30,18 @@ func NewTwinkle(args map[string]interface{}) (*Twinkle, error) {
 	gen := rand.New(src)
 
 	return &Twinkle{
-		Percentage: percentage,
-		source:     src,
-		generator:  gen,
+		Percentage:        percentage,
+		source:            src,
+		generator:         gen,
 		lastBeatTriggered: false,
 	}, nil
 }
 
 // Process applies the twinkle effect to the lamps.
-func (t *Twinkle) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
-	
-
+func (t *Twinkle) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	// Trigger twinkle only once per beat, when BeatProgress crosses a threshold (e.g., 0.0)
 	// and it hasn't been triggered yet for this beat.
 	if globals.BeatProgress < 0.1 && !t.lastBeatTriggered { // Trigger at the beginning of the beat
-		
 		numToTwinkle := int(float64(len(lamps)) * t.Percentage)
 
 		// Create a permutation of lamp indices and pick the first `numToTwinkle`.
@@ -66,4 +62,3 @@ func (t *Twinkle) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGl
 		t.lastBeatTriggered = false
 	}
 }
-

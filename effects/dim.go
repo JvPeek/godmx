@@ -3,12 +3,12 @@ package effects
 import (
 	"fmt"
 	"godmx/dmx"
-	"godmx/orchestrator"
+	"godmx/types"
 	"math"
 )
 
 func init() {
-	RegisterEffect("dim", func(args map[string]interface{}) (orchestrator.Effect, error) {
+	RegisterEffect("dim", func(args map[string]interface{}) (types.Effect, error) {
 		return NewDim(args)
 	})
 	RegisterEffectParameters("dim", map[string]interface{}{"percentage": 0.5})
@@ -31,7 +31,7 @@ func NewDim(args map[string]interface{}) (*Dim, error) {
 }
 
 // Process applies the dim effect to the lamps.
-func (d *Dim) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
+func (d *Dim) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	for i := range lamps {
 		lamps[i].R = uint8(math.Round(float64(lamps[i].R) * d.Percentage))
 		lamps[i].G = uint8(math.Round(float64(lamps[i].G) * d.Percentage))
