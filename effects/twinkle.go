@@ -1,7 +1,7 @@
 package effects
 
 import (
-	"fmt"
+	
 	"godmx/dmx"
 	"godmx/orchestrator"
 	"math/rand"
@@ -40,12 +40,12 @@ func NewTwinkle(args map[string]interface{}) (*Twinkle, error) {
 
 // Process applies the twinkle effect to the lamps.
 func (t *Twinkle) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
-	fmt.Printf("Twinkle: BeatProgress=%.2f, lastBeatTriggered=%t\n", globals.BeatProgress, t.lastBeatTriggered)
+	
 
 	// Trigger twinkle only once per beat, when BeatProgress crosses a threshold (e.g., 0.0)
 	// and it hasn't been triggered yet for this beat.
 	if globals.BeatProgress < 0.1 && !t.lastBeatTriggered { // Trigger at the beginning of the beat
-		fmt.Println("Twinkle: Triggered!")
+		
 		numToTwinkle := int(float64(len(lamps)) * t.Percentage)
 
 		// Create a permutation of lamp indices and pick the first `numToTwinkle`.

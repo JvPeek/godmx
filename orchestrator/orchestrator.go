@@ -82,25 +82,25 @@ func (o *Orchestrator) GetGlobals() *OrchestratorGlobals {
 
 // UpdateBeatProgress calculates and updates the global beat progress.
 func (o *Orchestrator) UpdateBeatProgress() {
-	fmt.Printf("UpdateBeatProgress: BPM=%.2f\n", o.globals.BPM)
+	
 	// Calculate time since last beat
 	elapsed := time.Since(o.lastBeatTime)
 
-	fmt.Printf("UpdateBeatProgress: elapsed=%v\n", elapsed)
+	
 
 	// Calculate duration of one beat
 	beatDuration := time.Duration((60.0 / o.globals.BPM) * float64(time.Second))
-	fmt.Printf("UpdateBeatProgress: beatDuration=%v\n", beatDuration)
+	
 
 	// Calculate beat progress (0.0 to 1.0)
 	o.globals.BeatProgress = float64(elapsed) / float64(beatDuration)
-	fmt.Printf("UpdateBeatProgress: BeatProgress=%.2f\n", o.globals.BeatProgress)
+	
 
 	// If we've passed a full beat, reset lastBeatTime
 	if o.globals.BeatProgress >= 1.0 {
 		o.lastBeatTime = time.Now()
 		o.globals.BeatProgress = 0.0 // Reset for the new beat
-		fmt.Println("UpdateBeatProgress: Beat reset!")
+		fmt.Println("Beat: Reset!")
 	}
 }
 
