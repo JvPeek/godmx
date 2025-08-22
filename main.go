@@ -115,11 +115,18 @@ func main() {
 				effect = effects.NewBlink()
 			case "twinkle":
 				var err error
-				effect, err = effects.NewTwinkle(effectConfig.Args)
-				if err != nil {
-					fmt.Printf("Error creating twinkle effect for chain %s: %v\n", chainConfig.ID, err)
-					return
-				}
+			effect, err = effects.NewTwinkle(effectConfig.Args)
+			if err != nil {
+				fmt.Printf("Error creating twinkle effect for chain %s: %v\n", chainConfig.ID, err)
+				return
+			}
+			case "darkwave":
+				var err error
+			effect, err = effects.NewDarkWave(effectConfig.Args)
+			if err != nil {
+				fmt.Printf("Error creating darkwave effect for chain %s: %v\n", chainConfig.ID, err)
+				return
+			}
 			// Add other effect types here
 			case "whiteout":
 				effect = effects.NewWhiteout()
