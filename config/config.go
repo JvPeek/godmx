@@ -75,6 +75,19 @@ type OutputConfig struct {
 	Args               map[string]interface{} `json:"args"`
 	ChannelMapping     string                 `json:"channelMapping"`
 	NumChannelsPerLamp int                    `json:"numChannelsPerLamp"`
+	Govee              GoveeOutputConfig      `json:"govee,omitempty"`
+}
+
+// GoveeDeviceConfig represents a single Govee device.
+type GoveeDeviceConfig struct {
+	MACAddress string `json:"mac_address"`
+	IPAddress  string `json:"ip_address"`
+}
+
+// GoveeOutputConfig represents the configuration for Govee output.
+type GoveeOutputConfig struct {
+	APIKey  string              `json:"api_key,omitempty"`
+	Devices []GoveeDeviceConfig `json:"devices"`
 }
 
 // GlobalsConfig represents the global parameters configuration.
@@ -299,6 +312,34 @@ func CreateDefaultConfig() Config {
 						"ip": "192.168.125.153",
 					},
 					ChannelMapping:     "RGB",
+					NumChannelsPerLamp: 3,
+				},
+			},
+			{
+				ID:       "goveeChain",
+				Priority: 3,
+				TickRate: 20,
+				NumLamps: 1, // Govee devices are typically single lamps
+				Effects: []EffectConfig{
+					{
+						ID:      "goveeRainbow",
+						Type:    "rainbow",
+						Args:    make(map[string]interface{}),
+						Enabled: &trueVal,
+					},
+				},
+				Output: OutputConfig{
+					Type: "govee",
+					Govee: GoveeOutputConfig{
+						APIKey: "YOUR_GOVEE_API_KEY", // Replace with your actual Govee API Key
+						Devices: []GoveeDeviceConfig{
+							{
+								MACAddress: "XX:XX:XX:XX:XX:XX", // Replace with your Govee device MAC
+								IPAddress:  "192.168.1.100",     // Replace with your Govee device IP
+							},
+						},
+					},
+					ChannelMapping:     "RGB", // Govee devices typically use RGB
 					NumChannelsPerLamp: 3,
 				},
 			},

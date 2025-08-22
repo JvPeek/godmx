@@ -1,0 +1,14 @@
+# Govee Integration - Remaining Tasks
+
+- **Fix outputs/govee.go compilation errors**:
+    - Resolve "no new variables on left side of := " error for r, g, b assignments. (This is the current blocker)
+- **Implement Govee Output Handling in outputs/govee.go**:
+    - Ensure proper DMX to Govee command translation (RGB to Govee color/brightness).
+    - Handle Govee device rate limiting (already started, but needs verification).
+    - Consider adding MAC address to Govee command JSON if required by protocol.
+- **Integrate Govee into orchestrator/chain.go**:
+    - Ensure `NewChain` correctly creates `GoveeOutput` instance.
+- **Update CreateDefaultConfig in config/config.go**:
+    - Add an example Govee output configuration with a dummy IP and MAC address. (Already done, but needs to be verified after fixes).
+- **Testing**:
+    - Test Govee output with actual devices once compilation is fixed.
