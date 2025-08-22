@@ -1,8 +1,8 @@
 package orchestrator
 
 import (
-	
 	"godmx/dmx"
+	"sync"
 	"time"
 )
 
@@ -17,6 +17,7 @@ type Chain struct {
 	orchestrator       *Orchestrator // Reference to the parent orchestrator
 	channelMapping     string
 	numChannelsPerLamp int
+	effectsMux         sync.Mutex
 }
 
 // NewChain creates a new Chain instance.
@@ -33,9 +34,24 @@ func NewChain(id string, priority, tickRate int, output Output, numLamps int, or
 	}
 }
 
-// AddEffect adds an effect to the chain.
+// AddEffect adds an effect to the chain in a thread-safe way.
 func (c *Chain) AddEffect(effect Effect) {
+	c.effectsMux.Lock()
+	defer c.effectsMux.Unlock()
 	c.Effects = append(c.Effects, effect)
+}
+
+// RemoveEffect removes an effect from the chain in a thread-safe way.
+func (c *Chain) RemoveEffect(effectToRemove Effect) {
+	c.effectsMux.Lock()
+	defer c.effectsMux.Unlock()
+	newEffects := []Effect{}
+	for _, effect := range c.Effects {
+		if effect != effectToRemove {
+			newEffects = append(newEffects, effect)
+		}
+	}
+	c.Effects = newEffects
 }
 
 // Tick processes the chain's effects and sends data to the output.
@@ -43,14 +59,19 @@ func (c *Chain) Tick() error {
 	// Update global beat progress before processing effects
 	c.orchestrator.UpdateBeatProgress()
 
-	// Process effects
-	globals := c.orchestrator.GetGlobals()
+	// Create a snapshot of the effects to process for this tick
+	c.effectsMux.Lock()
+	effectsSnapshot := make([]Effect, len(c.Effects))
+	copy(effectsSnapshot, c.Effects)
+	c.effectsMux.Unlock()
+
+	// Process the snapshot of effects
+
+globals := c.orchestrator.GetGlobals()
 	globals.TickRate = c.TickRate // Get globals from the orchestrator
-	for _, effect := range c.Effects {
+	for _, effect := range effectsSnapshot {
 		effect.Process(c.lamps, globals, c.channelMapping, c.numChannelsPerLamp) // Pass globals and channel info to the effect
 	}
-
-	
 
 	// Send to output
 	return c.Output.Send(c.lamps)
@@ -72,4 +93,3 @@ func (c *Chain) StartLoop() {
 		}
 	}()
 }
-
