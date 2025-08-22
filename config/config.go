@@ -328,6 +328,13 @@ func CreateDefaultConfig() Config {
 						Enabled: &trueVal,
 						Group:   "govee_color_effects", // Added group
 					},
+					{ // NEW: goveeSolidColor effect
+						ID:      "goveeSolidColor",
+						Type:    "solidColor",
+						Args:    make(map[string]interface{}),
+						Enabled: &falseVal, // Initially disabled
+						Group:   "govee_color_effects",
+					},
 				},
 				Output: OutputConfig{
 					Type: "govee",
@@ -393,15 +400,10 @@ func CreateDefaultConfig() Config {
 					Params:   map[string]interface{}{"enabled": true},
 				},
 				{
-					Type:    "add_effect",
-					ChainID: "goveeChain",
-					Params: map[string]interface{}{
-						"id":      "goveeSolidColor",
-						"type":    "solidColor",
-						"enabled": true,
-						"args":    map[string]interface{}{"color": "#FF0000"},
-						"group":   "govee_color_effects", // Added group
-					},
+					Type:     "toggle_effect",
+					ChainID:  "goveeChain",
+					EffectID: "goveeSolidColor", // Changed to toggle_effect
+					Params:   map[string]interface{}{"enabled": true},
 				},
 			},
 			"faster_bpm": {
