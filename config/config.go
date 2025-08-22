@@ -58,3 +58,48 @@ func LoadConfig(filePath string) (*Config, error) {
 
 	return &cfg, nil
 }
+
+// CreateDefaultConfig creates a default config.json file.
+func CreateDefaultConfig(filePath string) error {
+	defaultConfig := Config{
+		Chains: []ChainConfig{
+			{
+				ID:       "mainChain",
+				Priority: 1,
+				TickRate: 40,
+				NumLamps: 50,
+				Effects: []EffectConfig{
+					{
+						Type: "rainbow",
+						Args: make(map[string]interface{}),
+					},
+				},
+				Output: OutputConfig{
+					Type: "artnet",
+					Args: map[string]interface{}{
+						"ip": "127.0.0.1",
+					},
+					ChannelMapping:     "RGB",
+					NumChannelsPerLamp: 3,
+				},
+			},
+		},
+		Globals: GlobalsConfig{
+			BPM:       120,
+			Color1:    "#FF0000",
+			Color2:    "#0000FF",
+			Intensity: 255,
+		},
+	}
+
+	data, err := json.MarshalIndent(defaultConfig, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal default config: %w", err)
+	}
+
+	if err := os.WriteFile(filePath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write default config file: %w", err)
+	}
+
+	return nil
+}

@@ -8,6 +8,7 @@ import (
 	"godmx/orchestrator"
 	"godmx/outputs"
 	"godmx/utils"
+	"os"
 	"time"
 )
 
@@ -18,6 +19,15 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("Starting godmx...")
+
+	// Check if config file exists, create if not
+	if _, err := os.Stat(*configPath); os.IsNotExist(err) {
+		fmt.Printf("Config file not found at '%s', creating a default one.\n", *configPath)
+		if err := config.CreateDefaultConfig(*configPath); err != nil {
+			fmt.Printf("Error creating default config file: %v\n", err)
+			return
+		}
+	}
 
 	// Load configuration
 	cfg, err := config.LoadConfig(*configPath)
