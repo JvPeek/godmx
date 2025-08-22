@@ -1,0 +1,33 @@
+{
+  "chains": [
+    {
+      "id": "main-twinkle",
+      "priority": 1,
+      "tickRate": 40,
+      "numLamps": 50,
+      "effects": [
+        {
+          "type": "solidColor"
+        },
+        {
+          "type": "twinkle",
+          "args": {
+            "percentage": 0.1
+          }
+        }
+      ],
+      "output": {
+        "type": "artnet",
+        "args": {
+          "ip": "192.168.2.95"
+        }
+      }
+    }
+  ],
+  "globals": {
+    "bpm": 120.0,
+    "color1": "#0000FF",
+    "color2": "#000000",
+    "intensity": 255
+  }
+}

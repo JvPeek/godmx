@@ -1,0 +1,21 @@
+package effects
+
+import (
+	"godmx/dmx"
+	"godmx/orchestrator"
+)
+
+// SolidColor sets all lamps to a single color from global parameters.
+type SolidColor struct {
+	// No fields needed, color comes from globals
+}
+
+// Process applies the solid color to the lamps using globals.Color1.
+func (s *SolidColor) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals) {
+	for i := range lamps {
+		lamps[i].R = globals.Color1.R
+		lamps[i].G = globals.Color1.G
+		lamps[i].B = globals.Color1.B
+		lamps[i].W = globals.Color1.W
+	}
+}
