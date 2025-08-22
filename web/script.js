@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     ${chain.Effects.map(effect => `
                         <div class="chain-element ${effect.Enabled ? '' : 'disabled'}">
-                            <h4>Effect: ${effect.Type} ${effect.Enabled ? '(Enabled)' : '(Disabled)'}</h4>
+                            <h4>Effect: ${effect.Type}</h4>
                             ${renderArgs(effect.Args)}
                         </div>
                     `).join('')}

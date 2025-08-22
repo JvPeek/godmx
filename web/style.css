@@ -156,3 +156,26 @@ h1 {
 .show-all-button:hover {
     background-color: #005f99;
 }
+
+/*
+/* Compact View Styles */
+.chain-flow.compact-view {
+    flex-direction: row; /* Arrange elements in a row */
+    flex-wrap: wrap; /* Allow elements to wrap to the next line */
+    gap: 5px; /* Smaller gap between elements */
+}
+
+.chain-flow.compact-view .chain-element {
+    padding: 5px 8px; /* Smaller padding */
+    background-color: #4a4a4a; /* Slightly different background */
+    box-shadow: none; /* Remove shadow for a flatter look */
+}
+
+.chain-flow.compact-view .chain-element h4 {
+    margin: 0; /* Remove margin */
+    font-size: 0.9em; /* Smaller font size */
+    white-space: nowrap; /* Prevent text from wrapping */
+    overflow: hidden; /* Hide overflow text */
+    text-overflow: ellipsis; /* Add ellipsis for overflow */
+}
+*/
