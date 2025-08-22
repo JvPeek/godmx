@@ -13,7 +13,7 @@ type Gradient struct {
 }
 
 // Process applies the gradient effect to the lamps using globals.Color1 and globals.Color2.
-func (g *Gradient) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals) {
+func (g *Gradient) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	numLamps := float64(len(lamps))
 
 	// Convert Color1 and Color2 to HSV for interpolation
@@ -43,6 +43,7 @@ func (g *Gradient) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorG
 		lamps[i].R = r
 		lamps[i].G = g
 		lamps[i].B = b
-		lamps[i].W = 0 // No white for the gradient
+		// Set W to 0 as gradient is typically RGB only
+		lamps[i].W = 0
 	}
 }

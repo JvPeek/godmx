@@ -33,7 +33,7 @@ func NewTwinkle(args map[string]interface{}) (*Twinkle, error) {
 }
 
 // Process applies the twinkle effect to the lamps.
-func (t *Twinkle) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals) {
+func (t *Twinkle) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	numToTwinkle := int(float64(len(lamps)) * t.Percentage)
 
 	// Create a permutation of lamp indices and pick the first `numToTwinkle`.
@@ -41,7 +41,11 @@ func (t *Twinkle) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGl
 	indices := t.generator.Perm(len(lamps))
 
 	for i := 0; i < numToTwinkle; i++ {
-		lampIndex := indices[i]
-		lamps[lampIndex] = dmx.Lamp{R: 255, G: 255, B: 255, W: 255}
+		lampi := indices[i]
+		if numChannelsPerLamp == 3 && channelMapping == "RGB" {
+			lamps[lampi] = dmx.Lamp{R: 255, G: 255, B: 255, W: 0} // Set RGB to white, W to 0
+		} else {
+			lamps[lampi] = dmx.Lamp{R: 255, G: 255, B: 255, W: 255} // Default to RGBW white
+		}
 	}
 }

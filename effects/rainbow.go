@@ -4,11 +4,12 @@ import (
 	"godmx/dmx"
 	"godmx/orchestrator"
 	"godmx/utils"
+	"math"
 )
 
 // Rainbow creates a rainbow effect.
 type Rainbow struct {
-	counter uint64
+	counter float64
 }
 
 // NewRainbow creates a new Rainbow effect.
@@ -17,18 +18,26 @@ func NewRainbow() *Rainbow {
 }
 
 // Process applies the rainbow effect to the lamps.
-func (r *Rainbow) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals) {
-	// Use BPM to influence the speed of the rainbow
-	// A higher BPM means a faster rainbow
-	speedFactor := globals.BPM / 120.0 // Normalize to default BPM
-	r.counter += uint64(speedFactor * 1.0) // Increment counter based on speedFactor
+func (r *Rainbow) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
+	numLamps := float64(len(lamps))
+	const fixedTickRate = 40.0 // Assuming 40 FPS as per current configs
+
+	// Calculate how much the counter should advance per tick to complete one cycle per beat
+	// counterIncrementPerTick = (numLamps * BPM) / (60 * fixedTickRate)
+	counterIncrementPerTick := (numLamps * globals.BPM) / (60.0 * fixedTickRate)
+	r.counter += counterIncrementPerTick
 
 	for i := range lamps {
-		hue := (float64(r.counter) + float64(i)*10.0) / 100.0
-		r, g, b := utils.HsvToRgb(hue, 1.0, 1.0) // Changed to utils.HsvToRgb
-		lamps[i].R = r
-		lamps[i].G = g
-		lamps[i].B = b
-		lamps[i].W = 0 // No white for the rainbow
+		// Calculate hue: current position in rainbow + offset for each lamp
+		// The `r.counter` now directly represents the shift in terms of lamps.
+		hue := math.Mod((r.counter + float64(i)) / numLamps, 1.0)
+
+		// Convert back to RGB and assign
+		rgbR, rgbG, rgbB := utils.HsvToRgb(hue, 1.0, 1.0)
+		lamps[i].R = rgbR
+		lamps[i].G = rgbG
+		lamps[i].B = rgbB
+		// Set W to 0 as rainbow is typically RGB only
+		lamps[i].W = 0
 	}
 }

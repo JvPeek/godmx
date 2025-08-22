@@ -1,31 +1,35 @@
 package orchestrator
 
 import (
-	"fmt"
+	
 	"godmx/dmx"
 	"time"
 )
 
 // Chain represents a sequence of effects and an output.
 type Chain struct {
-	ID       string
-	Priority int
-	TickRate int // FPS
-	Effects  []Effect
-	Output   Output
-	lamps    []dmx.Lamp // Internal frame buffer for this chain
-	orchestrator *Orchestrator // Reference to the parent orchestrator
+	ID                 string
+	Priority           int
+	TickRate           int // FPS
+	Effects            []Effect
+	Output             Output
+	lamps              []dmx.Lamp // Internal frame buffer for this chain
+	orchestrator       *Orchestrator // Reference to the parent orchestrator
+	channelMapping     string
+	numChannelsPerLamp int
 }
 
 // NewChain creates a new Chain instance.
-func NewChain(id string, priority, tickRate int, output Output, numLamps int, orch *Orchestrator) *Chain {
+func NewChain(id string, priority, tickRate int, output Output, numLamps int, orch *Orchestrator, channelMapping string, numChannelsPerLamp int) *Chain {
 	return &Chain{
-		ID:       id,
-		Priority: priority,
-		TickRate: tickRate,
-		Output:   output,
-		lamps:    make([]dmx.Lamp, numLamps),
-		orchestrator: orch,
+		ID:                 id,
+		Priority:           priority,
+		TickRate:           tickRate,
+		Output:             output,
+		lamps:              make([]dmx.Lamp, numLamps),
+		orchestrator:       orch,
+		channelMapping:     channelMapping,
+		numChannelsPerLamp: numChannelsPerLamp,
 	}
 }
 
@@ -39,14 +43,10 @@ func (c *Chain) Tick() error {
 	// Process effects
 	globals := c.orchestrator.GetGlobals() // Get globals from the orchestrator
 	for _, effect := range c.Effects {
-		effect.Process(c.lamps, globals) // Pass globals to the effect
+		effect.Process(c.lamps, globals, c.channelMapping, c.numChannelsPerLamp) // Pass globals and channel info to the effect
 	}
 
-	// Debug print the first few lamps' data after effect processing
-	fmt.Printf("DEBUG: Chain Tick - Lamps after effect (first 4 lamps):\n")
-	for i := 0; i < 4 && i < len(c.lamps); i++ {
-		fmt.Printf("  Lamp %d: R=%d, G=%d, B=%d, W=%d\n", i, c.lamps[i].R, c.lamps[i].G, c.lamps[i].B, c.lamps[i].W)
-	}
+	
 
 	// Send to output
 	return c.Output.Send(c.lamps)
@@ -57,6 +57,7 @@ func (c *Chain) StartLoop() {
 	go func() {
 		ticker := time.NewTicker(time.Duration(1000/c.TickRate) * time.Millisecond)
 		defer ticker.Stop()
+		defer c.Output.Close() // Close the output when the loop exits
 
 		for range ticker.C {
 			err := c.Tick()
@@ -67,3 +68,4 @@ func (c *Chain) StartLoop() {
 		}
 	}()
 }
+

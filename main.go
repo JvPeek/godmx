@@ -56,63 +56,76 @@ func main() {
 		fmt.Println("No chains defined in configuration.")
 		return
 	}
-	chainConfig := cfg.Chains[0] // Get the first chain config
-
-	// Create Output
-	var output orchestrator.Output
-	switch chainConfig.Output.Type {
-	case "artnet":
-		ip, ok := chainConfig.Output.Args["ip"].(string)
-		if !ok {
-			fmt.Println("ArtNet output 'ip' argument missing or invalid.")
-			return
+	for _, chainConfig := range cfg.Chains { // Iterate over all chain configs
+		// Create Output
+		var output orchestrator.Output
+		channelMapping := chainConfig.Output.ChannelMapping
+		if channelMapping == "" {
+			channelMapping = "RGBW" // Default to RGBW
 		}
-		artNetOutput, err := outputs.NewArtNetOutput(ip, *debug) // Pass debug flag
-		if err != nil {
-			fmt.Printf("Error creating Art-Net output: %v\n", err)
-			return
+
+		numChannelsPerLamp := chainConfig.Output.NumChannelsPerLamp
+		if numChannelsPerLamp == 0 {
+			numChannelsPerLamp = 4 // Default to 4 channels per lamp
 		}
-		output = artNetOutput
-	default:
-		fmt.Printf("Unknown output type: %s\n", chainConfig.Output.Type)
-		return
-	}
 
-	// Create Chain
-	mainChain := orchestrator.NewChain(chainConfig.ID, chainConfig.Priority, chainConfig.TickRate, output, chainConfig.NumLamps, orch)
-
-	// Create Effects
-	for _, effectConfig := range chainConfig.Effects {
-		var effect orchestrator.Effect
-		switch effectConfig.Type {
-		case "rainbow":
-			effect = effects.NewRainbow()
-		case "solidColor":
-			effect = &effects.SolidColor{}
-		case "gradient":
-			effect = &effects.Gradient{}
-		case "blink":
-			effect = effects.NewBlink()
-		case "twinkle":
-			var err error
-			effect, err = effects.NewTwinkle(effectConfig.Args)
-			if err != nil {
-				fmt.Printf("Error creating twinkle effect: %v\n", err)
+		switch chainConfig.Output.Type {
+		case "artnet":
+			ip, ok := chainConfig.Output.Args["ip"].(string)
+			if !ok {
+				fmt.Printf("ArtNet output 'ip' argument missing or invalid for chain %s.\n", chainConfig.ID)
 				return
 			}
-		// Add other effect types here
+
+			artNetOutput, err := outputs.NewArtNetOutput(ip, *debug, channelMapping, numChannelsPerLamp)
+			if err != nil {
+				fmt.Printf("Error creating Art-Net output for chain %s: %v\n", chainConfig.ID, err)
+				return
+			}
+			output = artNetOutput
 		default:
-			fmt.Printf("Unknown effect type: %s\n", effectConfig.Type)
+			fmt.Printf("Unknown output type: %s for chain %s.\n", chainConfig.Output.Type, chainConfig.ID)
 			return
 		}
-		mainChain.AddEffect(effect)
+
+		// Create Chain
+		mainChain := orchestrator.NewChain(chainConfig.ID, chainConfig.Priority, chainConfig.TickRate, output, chainConfig.NumLamps, orch, channelMapping, numChannelsPerLamp)
+
+		// Create Effects
+		for _, effectConfig := range chainConfig.Effects {
+			var effect orchestrator.Effect
+			switch effectConfig.Type {
+			case "rainbow":
+				effect = effects.NewRainbow()
+			case "solidColor":
+				effect = &effects.SolidColor{}
+			case "gradient":
+				effect = &effects.Gradient{}
+			case "blink":
+				effect = effects.NewBlink()
+			case "twinkle":
+				var err error
+				effect, err = effects.NewTwinkle(effectConfig.Args)
+				if err != nil {
+					fmt.Printf("Error creating twinkle effect for chain %s: %v\n", chainConfig.ID, err)
+					return
+				}
+			// Add other effect types here
+			case "whiteout":
+				effect = effects.NewWhiteout()
+			default:
+				fmt.Printf("Unknown effect type: %s for chain %s.\n", effectConfig.Type, chainConfig.ID)
+				return
+			}
+			mainChain.AddEffect(effect)
+		}
+
+		// Add Chain to Orchestrator
+		orch.AddChain(mainChain)
+
+		// Start the Chain's loop
+		mainChain.StartLoop() // Start each chain's loop independently
 	}
-
-	// Add Chain to Orchestrator
-	orch.AddChain(mainChain)
-
-	// Start the Chain's loop
-	mainChain.StartLoop()
 
 	fmt.Println("Orchestrator running.")
 

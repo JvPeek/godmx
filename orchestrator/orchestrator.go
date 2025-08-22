@@ -14,12 +14,13 @@ type OrchestratorGlobals struct {
 
 // Effect defines the interface for all lighting effects.
 type Effect interface {
-	Process(lamps []dmx.Lamp, globals *OrchestratorGlobals)
+	Process(lamps []dmx.Lamp, globals *OrchestratorGlobals, channelMapping string, numChannelsPerLamp int)
 }
 
 // Output defines the interface for all lighting outputs.
 type Output interface {
 	Send(lamps []dmx.Lamp) error
+	Close() // Add Close method to the interface
 }
 
 // Orchestrator manages chains, global parameters, and overall system flow.

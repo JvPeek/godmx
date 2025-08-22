@@ -30,8 +30,10 @@ type EffectConfig struct {
 
 // OutputConfig represents the configuration for an output.
 type OutputConfig struct {
-	Type string                 `json:"type"`
-	Args map[string]interface{} `json:"args"`
+	Type               string                 `json:"type"`
+	Args               map[string]interface{} `json:"args"`
+	ChannelMapping     string                 `json:"channelMapping"`
+	NumChannelsPerLamp int                    `json:"numChannelsPerLamp"`
 }
 
 // GlobalsConfig represents the global parameters configuration.
