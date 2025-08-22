@@ -8,9 +8,10 @@ import (
 )
 
 func init() {
-	RegisterEffect("gradient", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
-		return &Gradient{}, args, nil
+	RegisterEffect("gradient", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return &Gradient{}, nil
 	})
+	RegisterEffectParameters("gradient", make(map[string]interface{}))
 }
 
 // Gradient creates a color gradient across the lamps.

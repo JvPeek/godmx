@@ -8,10 +8,10 @@ import (
 )
 
 func init() {
-	RegisterEffect("twinkle", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
-		effect, modifiedArgs, err := NewTwinkle(args)
-		return effect, modifiedArgs, err
+	RegisterEffect("twinkle", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return NewTwinkle(args)
 	})
+	RegisterEffectParameters("twinkle", map[string]interface{}{"percentage": 0.1})
 }
 
 // Twinkle randomly turns a percentage of lamps to white.
@@ -22,15 +22,8 @@ type Twinkle struct {
 }
 
 // NewTwinkle creates a new Twinkle effect.
-func NewTwinkle(args map[string]interface{}) (*Twinkle, map[string]interface{}, error) {
-	if args == nil {
-		args = make(map[string]interface{})
-	}
-	percentage, ok := args["percentage"].(float64)
-	if !ok {
-		percentage = 0.1 // Default to 10% twinkle
-		args["percentage"] = percentage
-	}
+func NewTwinkle(args map[string]interface{}) (*Twinkle, error) {
+	percentage := args["percentage"].(float64)
 
 	src := rand.NewSource(time.Now().UnixNano())
 	gen := rand.New(src)
@@ -39,7 +32,7 @@ func NewTwinkle(args map[string]interface{}) (*Twinkle, map[string]interface{}, 
 		Percentage: percentage,
 		source:     src,
 		generator:  gen,
-	}, args, nil
+	}, nil
 }
 
 // Process applies the twinkle effect to the lamps.

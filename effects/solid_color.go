@@ -6,9 +6,10 @@ import (
 )
 
 func init() {
-	RegisterEffect("solidColor", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
-		return &SolidColor{}, args, nil
+	RegisterEffect("solidColor", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return &SolidColor{}, nil
 	})
+	RegisterEffectParameters("solidColor", make(map[string]interface{}))
 }
 
 // SolidColor sets all lamps to a single color from global parameters.

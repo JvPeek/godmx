@@ -116,7 +116,25 @@ func main() {
 			}
 			var err error
 			var modifiedArgs map[string]interface{}
-			effect, modifiedArgs, err = constructor(effectConfig.Args)
+
+            // Get default parameters for the effect
+            defaultParams, ok := effects.GetEffectParameters(effectConfig.Type)
+            if !ok {
+                // For now, let's assume it's okay if there are no default params
+                defaultParams = make(map[string]interface{})
+            }
+
+            // Merge effectConfig.Args with defaultParams to create modifiedArgs
+            // Start with defaultParams, then override with effectConfig.Args
+            modifiedArgs = make(map[string]interface{})
+            for k, v := range defaultParams {
+                modifiedArgs[k] = v
+            }
+            for k, v := range effectConfig.Args {
+                modifiedArgs[k] = v
+            }
+
+			effect, err = constructor(modifiedArgs) // Pass the merged args to the constructor
 			if err != nil {
 				fmt.Printf("Error creating effect %s for chain %s: %v\n", effectConfig.Type, chainConfig.ID, err)
 				return

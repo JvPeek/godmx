@@ -8,9 +8,10 @@ import (
 )
 
 func init() {
-	RegisterEffect("rainbow", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
-		return NewRainbow(), args, nil
+	RegisterEffect("rainbow", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return NewRainbow(), nil
 	})
+	RegisterEffectParameters("rainbow", make(map[string]interface{}))
 }
 
 // Rainbow creates a rainbow effect.

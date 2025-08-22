@@ -6,9 +6,10 @@ import (
 )
 
 func init() {
-	RegisterEffect("blink", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
-		return NewBlink(), args, nil
+	RegisterEffect("blink", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return NewBlink(), nil
 	})
+	RegisterEffectParameters("blink", make(map[string]interface{}))
 }
 
 // Blink alternates between two colors based on the global BPM.

@@ -6,9 +6,10 @@ import (
 )
 
 func init() {
-	RegisterEffect("whiteout", func(args map[string]interface{}) (orchestrator.Effect, map[string]interface{}, error) {
-		return NewWhiteout(), args, nil
+	RegisterEffect("whiteout", func(args map[string]interface{}) (orchestrator.Effect, error) {
+		return NewWhiteout(), nil
 	})
+	RegisterEffectParameters("whiteout", make(map[string]interface{}))
 }
 
 // Whiteout sets all lamps to full white.
