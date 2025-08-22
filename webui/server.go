@@ -74,6 +74,25 @@ func StartWebServer(orch *orchestrator.Orchestrator, cfg *config.Config, port in
 		json.NewEncoder(w).Encode(simplifiedChains)
 	})
 
+	// API endpoint for BPM
+	http.HandleFunc("/api/bpm", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		
+		if r.Method == http.MethodPost {
+			var data struct {
+				BPM float64 `json:"bpm"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			orch.SetBPM(data.BPM)
+			log.Printf("BPM updated to: %.2f", data.BPM)
+		}
+		
+		json.NewEncoder(w).Encode(map[string]float64{"bpm": orch.GetGlobals().BPM})
+	})
+
 	log.Printf("Web UI server starting on port %d\n", port)
 	go func() {
 		if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {

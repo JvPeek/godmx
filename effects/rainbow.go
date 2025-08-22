@@ -31,12 +31,14 @@ func (r *Rainbow) Process(lamps []dmx.Lamp, globals *orchestrator.OrchestratorGl
 	// Calculate how much the counter should advance per tick to complete one cycle per beat
 	// counterIncrementPerTick = (numLamps * BPM) / (60 * fixedTickRate)
 	counterIncrementPerTick := (numLamps * globals.BPM) / (60.0 * fixedTickRate)
-	r.counter += counterIncrementPerTick
+	r.counter = math.Mod(r.counter + counterIncrementPerTick, numLamps)
+
+	phaseShift := r.counter / numLamps
 
 	for i := range lamps {
 		// Calculate hue: current position in rainbow + offset for each lamp
 		// The `r.counter` now directly represents the shift in terms of lamps.
-		hue := math.Mod((r.counter + float64(i)) / numLamps, 1.0)
+		hue := math.Mod((float64(i) / numLamps) + phaseShift, 1.0)
 
 		// Convert back to RGB and assign
 		rgbR, rgbG, rgbB := utils.HsvToRgb(hue, 1.0, 1.0)

@@ -1,4 +1,47 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const bpmValueSpan = document.getElementById('bpm-value');
+    const bpmDownButton = document.getElementById('bpm-down');
+    const bpmUpButton = document.getElementById('bpm-up');
+
+    let currentBPM = 0;
+
+    const fetchBPM = () => {
+        fetch('/api/bpm')
+            .then(response => response.json())
+            .then(data => {
+                currentBPM = data.bpm;
+                bpmValueSpan.textContent = currentBPM.toFixed(2);
+            })
+            .catch(error => console.error('Error fetching BPM:', error));
+    };
+
+    const updateBPM = (newBPM) => {
+        fetch('/api/bpm', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ bpm: newBPM }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            currentBPM = data.bpm;
+            bpmValueSpan.textContent = currentBPM.toFixed(2);
+        })
+        .catch(error => console.error('Error updating BPM:', error));
+    };
+
+    bpmDownButton.addEventListener('click', () => {
+        updateBPM(currentBPM - 5);
+    });
+
+    bpmUpButton.addEventListener('click', () => {
+        updateBPM(currentBPM + 5);
+    });
+
+    // Initial fetch of BPM
+    fetchBPM();
+
     fetch('/api/chains')
         .then(response => response.json())
         .then(chains => {

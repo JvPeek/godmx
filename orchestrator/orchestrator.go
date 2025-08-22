@@ -10,6 +10,7 @@ type OrchestratorGlobals struct {
 	Color1    dmx.Lamp
 	Color2    dmx.Lamp
 	Intensity uint8
+	TotalLamps int // Total number of lamps across all chains
 }
 
 // Effect defines the interface for all lighting effects.
