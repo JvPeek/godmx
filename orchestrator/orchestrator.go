@@ -6,6 +6,7 @@ import (
 	"godmx/config"
 	"godmx/dmx"
 	"godmx/types"
+	"godmx/utils"
 	"time"
 )
 
@@ -161,7 +162,14 @@ func (o *Orchestrator) executeAction(action config.ActionConfig) error {
 			if err == nil {
 				o.SetBPM(o.config.Globals.BPM)
 				o.SetIntensity(o.config.Globals.Intensity)
-				// Colors would need parsing logic here
+				color1, err1 := utils.ParseHexColor(o.config.Globals.Color1)
+				if err1 == nil {
+					o.SetColor1(color1)
+				}
+				color2, err2 := utils.ParseHexColor(o.config.Globals.Color2)
+				if err2 == nil {
+					o.SetColor2(color2)
+				}
 			}
 		}
 	default:

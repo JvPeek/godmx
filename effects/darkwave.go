@@ -44,8 +44,15 @@ func init() {
 
 // NewDarkWave creates a new DarkWave effect.
 func NewDarkWave(args map[string]interface{}) (*DarkWave, error) {
-	percentage := args["percentage"].(float64)
-	speed := args["speed"].(float64)
+	percentage := 0.5 // Default value
+	if p, ok := args["percentage"].(float64); ok {
+		percentage = p
+	}
+
+	speed := 1.0 // Default value
+	if s, ok := args["speed"].(float64); ok {
+		speed = s
+	}
 
 	return &DarkWave{Percentage: percentage, Speed: speed}, nil
 }

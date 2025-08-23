@@ -89,6 +89,18 @@ func main() {
 				return
 			}
 			output = artNetOutput
+		case "ddp":
+			ip, ok := chainConfig.Output.Args["ip"].(string)
+			if !ok {
+				fmt.Printf("DDP output 'ip' argument missing or invalid for chain %s.\n", chainConfig.ID)
+				return
+			}
+			ddpOutput, err := outputs.NewDDPOutput(ip, *debug, chainConfig.Output.ChannelMapping, chainConfig.Output.NumChannelsPerLamp)
+			if err != nil {
+				fmt.Printf("Error creating DDP output for chain %s: %v\n", chainConfig.ID, err)
+				return
+			}
+			output = ddpOutput
 		case "govee":
 			goveeOutput, err := outputs.NewGoveeOutput(chainConfig.Output.Govee, chainConfig.Output.ChannelMapping, chainConfig.Output.NumChannelsPerLamp)
 			if err != nil {

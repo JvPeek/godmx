@@ -192,7 +192,18 @@ func (c *Config) SetGlobal(key string, value interface{}) error {
 		} else {
 			return fmt.Errorf("invalid type for intensity: expected float64, got %T", value)
 		}
-	// Add cases for color1 and color2 if needed, requires parsing hex string
+	case "color1":
+		if color, ok := value.(string); ok {
+			c.Globals.Color1 = color
+		} else {
+			return fmt.Errorf("invalid type for color1: expected string, got %T", value)
+		}
+	case "color2":
+		if color, ok := value.(string); ok {
+			c.Globals.Color2 = color
+		} else {
+			return fmt.Errorf("invalid type for color2: expected string, got %T", value)
+		}
 	default:
 		return fmt.Errorf("unknown global parameter: %s", key)
 	}
@@ -348,6 +359,29 @@ func CreateDefaultConfig() Config {
 						},
 					},
 					ChannelMapping:     "RGB", // Govee devices typically use RGB
+					NumChannelsPerLamp: 3,
+				},
+			},
+			{
+				ID:       "ddpChain",
+				Priority: 2,
+				TickRate: 30,
+				NumLamps: 170, // Max lamps in a DDP packet is 170
+				Effects: []EffectConfig{
+					{
+						ID:      "ddpRainbow",
+						Type:    "rainbow",
+						Args:    make(map[string]interface{}),
+						Enabled: &trueVal,
+						Group:   "ddp_color_effects",
+					},
+				},
+				Output: OutputConfig{
+					Type: "ddp",
+					Args: map[string]interface{}{
+						"ip": "192.168.1.101", // Placeholder IP for WLED device
+					},
+					ChannelMapping:     "RGB",
 					NumChannelsPerLamp: 3,
 				},
 			},

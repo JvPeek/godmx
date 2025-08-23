@@ -98,59 +98,44 @@ func NewHueShift(args map[string]interface{}) (*HueShift, error) {
 
 // Process applies the hueshift effect to the lamps.
 func (s *HueShift) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
-	numLamps := float64(len(lamps))
-
 	// Update accumulatedHueShift based on beat progress
-	// This handles accumulation across beat boundaries.
 	if globals.BeatProgress < s.LastBeatProgress {
-		// A new beat has started, so add the remaining progress from the last beat
-		// and the current progress into the new beat.
 		s.accumulatedHueShift += (1.0 - s.LastBeatProgress) + globals.BeatProgress
 	} else {
-		// Within the same beat, just add the difference in progress.
 		s.accumulatedHueShift += (globals.BeatProgress - s.LastBeatProgress)
 	}
 
-	// Ensure accumulatedHueShift wraps around the BeatSpan, creating a looping animation.
 	s.accumulatedHueShift = math.Mod(s.accumulatedHueShift, s.BeatSpan)
-
-	// Calculate the current position in the hue rotation cycle (0 to 1)
-	// based on the accumulated shift and the defined beat span.
-	// This value represents the fraction of the beatspan completed.
 	beatspanProgress := s.accumulatedHueShift / s.BeatSpan
-
-	// Calculate the actual hue shift amount based on the huerange and beatspan progress.
-	// This value will be in the 0-1 range for hue, corresponding to the huerange in degrees.
 	hueShiftAmount := beatspanProgress * (s.HueRange / 360.0)
 
-	for i := 0; i < int(numLamps); i++ {
-		// Determine the base hue for this lamp's position in the pattern (0 to 1 across lamps)
-		baseHuePosition := float64(i) / numLamps
+	for i := range lamps {
+		// Get current color
+		r, g, b := lamps[i].R, lamps[i].G, lamps[i].B
 
-		// Apply the hue shift to get the effective hue position
-		var effectiveHuePosition float64
+		// Convert to HSV
+		h, sat, val := utils.RgbToHsv(r, g, b)
+
+		// Apply the hue shift
 		if s.Direction == "left" {
-			effectiveHuePosition = baseHuePosition + hueShiftAmount
+			h += hueShiftAmount
 		} else { // right
-			effectiveHuePosition = baseHuePosition - hueShiftAmount
+			h -= hueShiftAmount
 		}
 
-		// Ensure effectiveHuePosition wraps around 0-1
-		effectiveHuePosition = math.Mod(effectiveHuePosition, 1.0)
-		if effectiveHuePosition < 0 {
-			effectiveHuePosition += 1.0
+		// Wrap hue
+		h = math.Mod(h, 1.0)
+		if h < 0 {
+			h += 1.0
 		}
 
-		// Now, use this effectiveHuePosition to generate a hue.
-		// For a simple rainbow, effectiveHuePosition directly maps to hue.
-		// We need to decide on saturation and value. Let's assume full saturation and value for now.
-		r, g, b := utils.HsvToRgb(effectiveHuePosition, 1.0, 1.0)
+		// Convert back to RGB
+		newR, newG, newB := utils.HsvToRgb(h, sat, val)
 
 		// Update lamp with new RGB values
-		lamps[i].R = r
-		lamps[i].G = g
-		lamps[i].B = b
-		lamps[i].W = 0 // Hue shift doesn't affect white channel directly
+		lamps[i].R = newR
+		lamps[i].G = newG
+		lamps[i].B = newB
 	}
 
 	// Store current BeatProgress for the next frame's calculation
