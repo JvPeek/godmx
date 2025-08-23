@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"godmx/dmx"
 	"godmx/types"
-	"math"
 )
 
 func init() {
@@ -23,6 +22,13 @@ func init() {
 				DataType:     "string",
 				DefaultValue: "left",
 			},
+			{
+				InternalName: "speed",
+				DisplayName:  "Speed",
+				Description:  "The speed of the shift, from 0 to 1 (1 being 1 shift per beat).",
+				DataType:     "float64",
+				DefaultValue: 1.0,
+			},
 		},
 	})
 }
@@ -30,6 +36,7 @@ func init() {
 // Shift effect shifts the DMX data left or right.
 type Shift struct {
 	Direction string  // "left" or "right"
+	Speed     float64 // 0 to 1, 1 being 1 shift per beat
 }
 
 // NewShift creates a new Shift effect.
@@ -43,7 +50,22 @@ func NewShift(args map[string]interface{}) (*Shift, error) {
 		return nil, fmt.Errorf("invalid direction for shift effect: %s. Must be 'left' or 'right'", direction)
 	}
 
-	return &Shift{Direction: direction},
+	speed := 1.0 // Default speed
+	if s, ok := args["speed"].(float64); ok {
+		if s >= 0 && s <= 1 {
+			speed = s
+		} else {
+			return nil, fmt.Errorf("invalid speed for shift effect: %f. Must be between 0 and 1", s)
+		}
+	} else if s, ok := args["speed"].(int); ok {
+		if float64(s) >= 0 && float64(s) <= 1 {
+			speed = float64(s)
+		} else {
+			return nil, fmt.Errorf("invalid speed for shift effect: %d. Must be between 0 and 1", s)
+		}
+	}
+
+	return &Shift{Direction: direction, Speed: speed},
 		nil
 }
 
@@ -51,24 +73,25 @@ func NewShift(args map[string]interface{}) (*Shift, error) {
 func (s *Shift) Process(lamps []dmx.Lamp, globals *types.OrchestratorGlobals, channelMapping string, numChannelsPerLamp int) {
 	numLamps := float64(len(lamps))
 
-	step := globals.BeatProgress * numLamps // Shift one full length of lamps per beat
-
-	// Ensure step wraps around the number of lamps
-	step = math.Mod(step, numLamps)
+	// Calculate the total shift amount based on beat progress and speed
+	// This value accumulates over time, representing the total number of lamps shifted
+	// since the beginning of the current beat cycle, scaled by speed.
+	shiftAmount := globals.BeatProgress * s.Speed * numLamps
 
 	shiftedLamps := make([]dmx.Lamp, int(numLamps))
 
 	for i := 0; i < int(numLamps); i++ {
 		var sourceIndex int
 		if s.Direction == "left" {
-			sourceIndex = int(math.Round(float64(i) + step)) % int(numLamps)
+			sourceIndex = int(float64(i) + shiftAmount)
 		} else { // right
-			sourceIndex = int(math.Round(float64(i) - step))
-			// Handle negative indices for right shift
-			if sourceIndex < 0 {
-				sourceIndex = int(numLamps) + sourceIndex % int(numLamps)
-			}
-			sourceIndex = sourceIndex % int(numLamps)
+			sourceIndex = int(float64(i) - shiftAmount)
+		}
+
+		// Ensure sourceIndex wraps around the number of lamps
+		sourceIndex = sourceIndex % int(numLamps)
+		if sourceIndex < 0 {
+			sourceIndex += int(numLamps)
 		}
 		shiftedLamps[i] = lamps[sourceIndex]
 	}
