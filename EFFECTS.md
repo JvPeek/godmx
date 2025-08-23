@@ -73,6 +73,22 @@ Creates a smooth color gradient across the lamps, interpolating between global C
 
 ---
 
+## Hue Shift
+
+Shifts the hue of the DMX data across the lamps, synchronized with the BPM.
+
+**Tags**: bpm_sensitive, color, pattern, transparent
+
+### Parameters
+
+| Parameter Name | Display Name | Data Type | Default Value | Min Value | Max Value | Description |
+|----------------|--------------|-----------|---------------|-----------|-----------|-------------|
+| beatspan | Beat Span | float64 | 1 | - | - | The number of beats for a full hue rotation. |
+| direction | Direction | string | left | - | - | The direction to shift the hue ('left' or 'right'). |
+| huerange | Hue Range | float64 | 360 | - | - | The total hue shift in degrees (0-360) over the beatspan. |
+
+---
+
 ## Rainbow
 
 Generates a static rainbow spectrum across the lamps.
@@ -92,6 +108,7 @@ Shifts the DMX data (colors) across the lamps either left or right, synchronized
 | Parameter Name | Display Name | Data Type | Default Value | Min Value | Max Value | Description |
 |----------------|--------------|-----------|---------------|-----------|-----------|-------------|
 | direction | Direction | string | left | - | - | The direction to shift the lamps ('left' or 'right'). |
+| speed | Speed | float64 | 1 | - | - | The speed of the shift, from 0 to 1 (1 being 1 shift per beat). |
 
 ---
 
