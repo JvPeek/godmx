@@ -8,7 +8,7 @@ import (
 	"godmx/config"
 
 	"gitlab.com/gomidi/midi/v2"
-	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // Required for MIDI driver
+	
 )
 
 // MidiController manages MIDI input and triggers orchestrator events.
