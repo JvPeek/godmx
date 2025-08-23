@@ -10,14 +10,24 @@ This software is built for technical people who want raw, command-line control o
 
 ## Features
 
-- [ ] **Chain-based DMX control:** Organize your lights into logical groups.
-- [ ] **Extensible Effect System:** Apply various lighting effects (rainbow, solid color, shift, hueshift, blink, etc.).
-- [ ] **Event-driven Automation:** Trigger complex sequences of actions via MIDI or Web UI.
+*   **Chain-based DMX control:** Organize your lights into logical groups.
+*   **Extensible Effect System:** Apply various lighting effects (rainbow, solid color, shift, hueshift, blink, etc.).
+*   **Event-driven Automation:** Trigger complex sequences of actions via MIDI or Web UI.
+*   **Cross-platform Compilation:** Build for Linux, macOS, and Windows.
+*   **Web-based UI:** Monitor and control your setup from a browser.
+*   **ArtNet Output:** Control DMX fixtures over ArtNet.
+*   **Govee Output:** Control Govee smart lights.
 
-- [ ] **Cross-platform Compilation:** Build for Linux, macOS, and Windows.
-- [ ] **Web-based UI:** Monitor and control your setup from a browser.
-- [ ] **ArtNet Output:** Control DMX fixtures over ArtNet.
-- [ ] **Govee Output:** Control Govee smart lights.
+## Current Limitations / Roadmap
+
+`GoDMX` is under active development, and while powerful, it has some limitations and planned features:
+
+*   **Output Protocols:** Currently supports ArtNet and Govee. Planned additions include WLED effect control, E1.31/sACN, DDP, and potentially Philips Hue (once a device is available for testing).
+*   **Fixture Types:** Currently, only RGB(W) lights are fully supported. Future plans include support for smoke machines, moving heads, strobe lights, and other DMX fixture types.
+*   **Setup & Usability:** Initial setup can be a bit of a chore. Future improvements aim to make this process easier, possibly with a CLI assistant.
+*   **Effects Library:** While `GoDMX` provides building blocks, a larger library of pre-built effects and an online repository for sharing "cool chains" are planned.
+*   **BPM Synchronization:** Manual BPM input is currently required. Future features include MIDI clock support and audio BPM detection to simplify synchronization, especially for live performances.
+*   **Control Methods:** Beyond MIDI and the basic Web UI, alternative control methods are being considered, such as touch interfaces or keyboard input.
 
 ## Core Principles
 
