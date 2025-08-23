@@ -1,6 +1,6 @@
 BUILD_DIR := build
 
-.PHONY: all linux macos windows clean
+.PHONY: all linux macos windows clean install
 
 all: linux macos windows
 
@@ -21,6 +21,17 @@ $(BUILD_DIR)/godmx_macos:
 $(BUILD_DIR)/godmx_windows.exe:
 	mkdir -p $(BUILD_DIR)
 	GOOS=windows GOARCH=amd64 go build -o $@ .
+
+install: all
+	@echo "Installing godmx to /usr/local/bin..."
+ifeq ($(shell /usr/bin/uname -s),Linux)
+	sudo cp $(BUILD_DIR)/godmx_linux /usr/local/bin/godmx
+else ifeq ($(shell /usr/bin/uname -s),Darwin)
+	sudo cp $(BUILD_DIR)/godmx_macos /usr/local/bin/godmx
+else
+	@echo "Install not supported for this OS ($(shell /usr/bin/uname -s))."
+endif
+	@echo "Installation complete."
 
 clean:
 	rm -rf $(BUILD_DIR)

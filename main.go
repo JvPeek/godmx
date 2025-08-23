@@ -34,7 +34,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("Starting godmx...")
+	fmt.Println("Starting GoDMX...")
 
 	// Load configuration
 	cfg, err := config.LoadConfig(*configPath)
