@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"godmx/effects"
 	"log"
 	"os"
 )
@@ -227,8 +228,35 @@ func LoadConfig(filePath string) (*Config, error) {
 	defaultCfg := CreateDefaultConfig()
 
 	// Merge default values into the loaded config
-	if mergeConfigs(&cfg, &defaultCfg) {
-		log.Println("Updating config file with missing default values.")
+	configModified := mergeConfigs(&cfg, &defaultCfg)
+
+	// Augment effect arguments with default values from metadata
+	for i := range cfg.Chains {
+		chain := &cfg.Chains[i]
+		for j := range chain.Effects {
+			effect := &chain.Effects[j]
+			metadata, ok := effects.GetEffectMetadata(effect.Type)
+			if !ok {
+				log.Printf("Warning: Metadata not found for effect type '%s'. Skipping default arg augmentation.\n", effect.Type)
+				continue
+			}
+
+			if effect.Args == nil {
+				effect.Args = make(map[string]interface{})
+			}
+
+			for _, param := range metadata.Parameters {
+				if _, exists := effect.Args[param.InternalName]; !exists {
+					effect.Args[param.InternalName] = param.DefaultValue
+					configModified = true
+				}
+			}
+		}
+	}
+
+	// Save config if any changes were made (either by mergeConfigs or effect arg augmentation)
+	if configModified {
+		log.Println("Updating config file with missing default values or augmented effect arguments.")
 		if err := SaveConfig(&cfg, filePath); err != nil {
 			log.Printf("Error saving updated config file: %v\n", err)
 		}

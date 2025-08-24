@@ -26,15 +26,16 @@ type Orchestrator struct {
 
 // NewOrchestrator creates a new Orchestrator instance.
 func NewOrchestrator(cfg *config.Config) *Orchestrator {
-	return &Orchestrator{
+	o := &Orchestrator{
 		config: cfg,
 		globals: types.OrchestratorGlobals{
-			BPM:       120.0,
-			Color1:    dmx.Lamp{R: 255, G: 0, B: 0, W: 0},
-			Color2:    dmx.Lamp{R: 0, G: 0, B: 255, W: 0},
+			BPM:       cfg.Globals.BPM,
+			Color1:    func() dmx.Lamp { c, _ := utils.ParseHexColor(cfg.Globals.Color1); return c }(),
+			Color2:    func() dmx.Lamp { c, _ := utils.ParseHexColor(cfg.Globals.Color2); return c }(),
 		},
 		lastBeatTime: time.Now(),
 	}
+	return o
 }
 
 // AddChain adds a new chain to the orchestrator.
@@ -165,9 +166,16 @@ func (o *Orchestrator) executeAction(action config.ActionConfig) error {
 				}
 			}
 		}
+		// Save config after modification
+		if err == nil {
+			if saveErr := config.SaveConfig(o.config, "config.json"); saveErr != nil {
+				fmt.Printf("Error saving config after set_global: %v\n", saveErr)
+			}
+		}
 	default:
 		err = fmt.Errorf("unknown action type: %s", action.Type)
 	}
 
 	return err
 }
+
