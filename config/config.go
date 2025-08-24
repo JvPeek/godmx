@@ -9,46 +9,46 @@ import (
 
 // ActionConfig represents a single action to be performed by an event.
 type ActionConfig struct {
-	Type     string                 `json:"type"`
-	ChainID  string                 `json:"chain_id,omitempty"`
-	EffectID string                 `json:"effect_id,omitempty"`
-	Params   map[string]interface{} `json:"params,omitempty"`
+	Type     string                 	`json:"type"`
+	ChainID  string                 	`json:"chain_id,omitempty"`
+	EffectID string                 	`json:"effect_id,omitempty"`
+	Params   map[string]interface{} 	`json:"params,omitempty"`
 }
 
 // MidiTriggerConfig represents a single MIDI message that triggers an event.
 type MidiTriggerConfig struct {
-	MessageType string `json:"message_type"` // e.g., "cc", "note_on", "note_off"
-	Number      int    `json:"number"`       // CC number or note number
-	Value       int    `json:"value"`        // CC value or velocity (0-127). Use -1 for any value.
-	EventName   string `json:"event_name"`   // The name of the event to trigger
+	MessageType string 	`json:"message_type"` // e.g., "cc", "note_on", "note_off"
+	Number      int    	`json:"number"`       // CC number or note number
+	Value       int    	`json:"value"`        // CC value or velocity (0-127). Use -1 for any value.
+	EventName   string 	`json:"event_name"`   // The name of the event to trigger
 }
 
 // Config represents the overall application configuration.
 type Config struct {
-	Chains      []ChainConfig             `json:"chains"`
-	Globals     GlobalsConfig            `json:"globals"`
-	Events      map[string][]ActionConfig `json:"events"`
-	MidiTriggers []MidiTriggerConfig      `json:"midi_triggers,omitempty"`
-	MidiPortName string                 `json:"midi_port_name,omitempty"`
+	Globals      GlobalsConfig            	`json:"globals"`
+	Chains       []ChainConfig            	`json:"chains"`
+	Actions      map[string][]ActionConfig 	`json:"actions"` // Renamed from Events
+	Triggers     []MidiTriggerConfig      	`json:"triggers"` // Renamed from MidiTriggers
+	MidiPortName string                 	`json:"midi_port_name,omitempty"`
 }
 
 // ChainConfig represents the configuration for a single chain.
 type ChainConfig struct {
-	ID       string         `json:"id"`
-	Priority int            `json:"priority"`
-	TickRate int            `json:"tickRate"`
-	NumLamps int            `json:"numLamps"`
-	Effects  []EffectConfig `json:"effects"`
-	Output   OutputConfig   `json:"output"`
+	ID       string         	`json:"id"`
+	Priority int            	`json:"priority"`
+	TickRate int            	`json:"tickRate"`
+	NumLamps int            	`json:"numLamps"`
+	Effects  []EffectConfig 	`json:"effects"`
+	Output   OutputConfig   	`json:"output"`
 }
 
 // EffectConfig represents the configuration for an effect.
 type EffectConfig struct {
-	ID      string                 `json:"id"`
-	Type    string                 `json:"type"`
-	Args    map[string]interface{} `json:"args"`
-	Enabled *bool                  `json:"enabled,omitempty"`
-	Group   string                 `json:"group,omitempty"`
+	ID      string                 	`json:"id"`
+	Type    string                 	`json:"type"`
+	Args    map[string]interface{} 	`json:"args"`
+	Enabled *bool                  	`json:"enabled,omitempty"`
+	Group   string                 	`json:"group,omitempty"`
 }
 
 // UnmarshalJSON for EffectConfig to default Enabled to true if not present
@@ -71,31 +71,30 @@ func (e *EffectConfig) UnmarshalJSON(data []byte) error {
 
 // OutputConfig represents the configuration for an output.
 type OutputConfig struct {
-	Type               string                 `json:"type"`
-	Args               map[string]interface{} `json:"args"`
-	ChannelMapping     string                 `json:"channelMapping"`
-	NumChannelsPerLamp int                    `json:"numChannelsPerLamp"`
-	Govee              GoveeOutputConfig      `json:"govee,omitempty"`
+	Type               string                 	`json:"type"`
+	Args               map[string]interface{} 	`json:"args"`
+	ChannelMapping     string                 	`json:"channelMapping"`
+	NumChannelsPerLamp int                    	`json:"numChannelsPerLamp"`
+	Govee              GoveeOutputConfig      	`json:"govee,omitempty"`
 }
 
 // GoveeDeviceConfig represents a single Govee device.
 type GoveeDeviceConfig struct {
-	MACAddress string `json:"mac_address"`
-	IPAddress  string `json:"ip_address"`
+	MACAddress string 	`json:"mac_address"`
+	IPAddress  string 	`json:"ip_address"`
 }
 
 // GoveeOutputConfig represents the configuration for Govee output.
 type GoveeOutputConfig struct {
-	APIKey  string              `json:"api_key,omitempty"`
-	Devices []GoveeDeviceConfig `json:"devices"`
+	APIKey  string              	`json:"api_key,omitempty"`
+	Devices []GoveeDeviceConfig 	`json:"devices"`
 }
 
 // GlobalsConfig represents the global parameters configuration.
 type GlobalsConfig struct {
-	BPM       float64 `json:"bpm"`
-	Color1    string  `json:"color1"`
-	Color2    string  `json:"color2"`
-	Intensity uint8   `json:"intensity"`
+	BPM    float64 	`json:"bpm"`
+	Color1 string  	`json:"color1"`
+	Color2 string  	`json:"color2"`
 }
 
 // --- Config Manipulation Functions ---
@@ -186,12 +185,6 @@ func (c *Config) SetGlobal(key string, value interface{}) error {
 		} else {
 			return fmt.Errorf("invalid type for bpm: expected float64, got %T", value)
 		}
-	case "intensity":
-		if intensity, ok := value.(float64); ok { // JSON unmarshals numbers to float64
-			c.Globals.Intensity = uint8(intensity)
-		} else {
-			return fmt.Errorf("invalid type for intensity: expected float64, got %T", value)
-		}
 	case "color1":
 		if color, ok := value.(string); ok {
 			c.Globals.Color1 = color
@@ -214,6 +207,14 @@ func (c *Config) SetGlobal(key string, value interface{}) error {
 func LoadConfig(filePath string) (*Config, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("Config file not found at %s. Creating default config.\n", filePath)
+			cfg := CreateDefaultConfig()
+			if err := SaveConfig(&cfg, filePath); err != nil {
+				return nil, fmt.Errorf("failed to save default config file: %w", err)
+			}
+			return &cfg, nil
+		}
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
@@ -268,14 +269,18 @@ func mergeConfigs(loaded *Config, defaults *Config) bool {
 		loaded.Globals.Color2 = defaults.Globals.Color2
 		changed = true
 	}
-	if loaded.Globals.Intensity == 0 {
-		loaded.Globals.Intensity = defaults.Globals.Intensity
+
+	// Ensure Chains, Actions, and Triggers are initialized if they are nil after unmarshaling
+	if loaded.Chains == nil {
+		loaded.Chains = []ChainConfig{}
 		changed = true
 	}
-
-	// Merge MidiTriggers
-	if len(loaded.MidiTriggers) == 0 && len(defaults.MidiTriggers) > 0 {
-		loaded.MidiTriggers = defaults.MidiTriggers
+	if loaded.Actions == nil {
+		loaded.Actions = make(map[string][]ActionConfig)
+		changed = true
+	}
+	if loaded.Triggers == nil {
+		loaded.Triggers = []MidiTriggerConfig{}
 		changed = true
 	}
 
@@ -285,194 +290,20 @@ func mergeConfigs(loaded *Config, defaults *Config) bool {
 		changed = true
 	}
 
-	// TODO: More sophisticated merging for Chains and Events if needed
-
 	return changed
 }
 
 // CreateDefaultConfig creates a default Config struct.
 func CreateDefaultConfig() Config {
-	trueVal := true
-	falseVal := false
 	return Config{
-		Chains: []ChainConfig{
-			{
-				ID:       "mainChain",
-				Priority: 1,
-				TickRate: 40,
-				NumLamps: 93,
-				Effects: []EffectConfig{
-					{
-						ID:      "defaultRainbow",
-						Type:    "rainbow",
-						Args:    make(map[string]interface{}),
-						Enabled: &trueVal,
-						Group:   "basic_color",
-					},
-					{
-						ID:      "defaultSolidColor",
-						Type:    "solidColor",
-						Args:    make(map[string]interface{}),
-						Enabled: &falseVal,
-						Group:   "basic_color",
-					},
-				},
-				Output: OutputConfig{
-					Type: "artnet",
-					Args: map[string]interface{}{
-						"ip": "192.168.125.153",
-					},
-					ChannelMapping:     "RGB",
-					NumChannelsPerLamp: 3,
-				},
-			},
-			{
-				ID:       "goveeChain",
-				Priority: 3,
-				TickRate: 20,
-				NumLamps: 16, // Updated to 16
-				Effects: []EffectConfig{
-					{
-						ID:      "goveeRainbow",
-						Type:    "rainbow",
-						Args:    make(map[string]interface{}),
-						Enabled: &trueVal,
-						Group:   "govee_color_effects", // Added group
-					},
-					{ // NEW: goveeSolidColor effect
-						ID:      "goveeSolidColor",
-						Type:    "solidColor",
-						Args:    make(map[string]interface{}),
-						Enabled: &falseVal, // Initially disabled
-						Group:   "govee_color_effects",
-					},
-				},
-				Output: OutputConfig{
-					Type: "govee",
-					Govee: GoveeOutputConfig{
-						// APIKey: "YOUR_GOVEE_API_KEY", // Removed APIKey
-						Devices: []GoveeDeviceConfig{
-							{
-								MACAddress: "XX:XX:XX:XX:XX:XX", // Placeholder
-								IPAddress:  "192.168.1.100",     // Placeholder
-							},
-						},
-					},
-					ChannelMapping:     "RGB", // Govee devices typically use RGB
-					NumChannelsPerLamp: 3,
-				},
-			},
-			{
-				ID:       "ddpChain",
-				Priority: 2,
-				TickRate: 30,
-				NumLamps: 170, // Max lamps in a DDP packet is 170
-				Effects: []EffectConfig{
-					{
-						ID:      "ddpRainbow",
-						Type:    "rainbow",
-						Args:    make(map[string]interface{}),
-						Enabled: &trueVal,
-						Group:   "ddp_color_effects",
-					},
-				},
-				Output: OutputConfig{
-					Type: "ddp",
-					Args: map[string]interface{}{
-						"ip": "192.168.1.101", // Placeholder IP for WLED device
-					},
-					ChannelMapping:     "RGB",
-					NumChannelsPerLamp: 3,
-				},
-			},
-		},
 		Globals: GlobalsConfig{
-			BPM:       120,
-			Color1:    "#FF0000",
-			Color2:    "#0000FF",
-			Intensity: 255,
+			BPM:    174,
+			Color1: "FFA000",
+			Color2: "000000",
 		},
-		Events: map[string][]ActionConfig{
-			"strobe_on": {
-				{
-					Type:    "add_effect",
-					ChainID: "mainChain",
-					Params: map[string]interface{}{
-						"id":      "strobeEffect",
-						"type":    "blink",
-						"enabled": true,
-						"args":    map[string]interface{}{"divider": 4, "dutyCycle": 0.1},
-					},
-				},
-			},
-			"strobe_off": {
-				{
-					Type:     "remove_effect",
-					ChainID:  "mainChain",
-					EffectID: "strobeEffect",
-				},
-			},
-			"rainbow_on": { // Updated
-				{
-					Type:     "toggle_effect",
-					ChainID:  "mainChain",
-					EffectID: "defaultRainbow",
-					Params:   map[string]interface{}{"enabled": true},
-				},
-				{
-					Type:     "toggle_effect",
-					ChainID:  "goveeChain",
-					EffectID: "goveeRainbow",
-					Params:   map[string]interface{}{"enabled": true},
-				},
-			},
-			"solid_color_on": { // Updated
-				{
-					Type:     "toggle_effect",
-					ChainID:  "mainChain",
-					EffectID: "defaultSolidColor",
-					Params:   map[string]interface{}{"enabled": true},
-				},
-				{
-					Type:     "toggle_effect",
-					ChainID:  "goveeChain",
-					EffectID: "goveeSolidColor", // Changed to toggle_effect
-					Params:   map[string]interface{}{"enabled": true},
-				},
-			},
-			"faster_bpm": {
-				{
-					Type:   "set_global",
-					Params: map[string]interface{}{"bpm": 140},
-				},
-			},
-		},
-		MidiTriggers: []MidiTriggerConfig{
-			{
-				MessageType: "cc",
-				Number:      1,
-				Value:       -1, // Any value
-				EventName:   "strobe_on",
-			},
-			{
-				MessageType: "cc",
-				Number:      2,
-				Value:       -1, // Any value
-				EventName:   "strobe_off",
-			},
-			{
-				MessageType: "note_on",
-				Number:      60, // Middle C
-				Value:       -1, // Any velocity
-				EventName:   "rainbow_on",
-			},
-			{
-				MessageType: "note_off",
-				Number:      60, // Middle C
-				Value:       -1, // Any velocity
-				EventName:   "rainbow_off",
-			},
-		},
-		MidiPortName: "Midi Through Port-0",
+		Chains:       []ChainConfig{},
+		Actions:      make(map[string][]ActionConfig),
+		Triggers:     []MidiTriggerConfig{},
+		MidiPortName: "", // Default to empty, will be merged if default has one
 	}
 }

@@ -5,10 +5,14 @@ import (
 	"godmx/types"
 )
 
+/*
+Effect Name: Solid Color
+Description: Sets all lamps to a single color defined by global Color1.
+Tags: [color_source]
+Parameters: []
+*/
 func init() {
-	RegisterEffect("solidColor", func(args map[string]interface{}) (types.Effect, error) {
-		return &SolidColor{}, nil
-	})
+	RegisterEffect("solidColor", NewSolidColor)
 	RegisterEffectMetadata("solidColor", types.EffectMetadata{
 		HumanReadableName: "Solid Color",
 		Description:       "Sets all lamps to a single color defined by global Color1.",
@@ -20,6 +24,11 @@ func init() {
 // SolidColor sets all lamps to a single color from global parameters.
 type SolidColor struct {
 	// No fields needed, color comes from globals
+}
+
+// NewSolidColor creates a new SolidColor effect.
+func NewSolidColor(args map[string]interface{}) (types.Effect, error) {
+	return &SolidColor{}, nil
 }
 
 // Process applies the solid color to the lamps using globals.Color1.

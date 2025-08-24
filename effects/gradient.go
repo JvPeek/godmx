@@ -7,10 +7,14 @@ import (
 	"godmx/utils"
 )
 
+/*
+Effect Name: Gradient
+Description: Creates a smooth color gradient across the lamps, interpolating between global Color1 and Color2.
+Tags: [color_source, pattern]
+Parameters: []
+*/
 func init() {
-	RegisterEffect("gradient", func(args map[string]interface{}) (types.Effect, error) {
-		return &Gradient{}, nil
-	})
+	RegisterEffect("gradient", NewGradient)
 	RegisterEffectMetadata("gradient", types.EffectMetadata{
 		HumanReadableName: "Gradient",
 		Description:       "Creates a smooth color gradient across the lamps, interpolating between global Color1 and Color2.",
@@ -22,6 +26,11 @@ func init() {
 // Gradient creates a color gradient across the lamps.
 type Gradient struct {
 	// No fields needed, colors come from globals
+}
+
+// NewGradient creates a new Gradient effect.
+func NewGradient(args map[string]interface{}) (types.Effect, error) {
+	return &Gradient{}, nil
 }
 
 // Process applies the gradient effect to the lamps using globals.Color1 and globals.Color2.

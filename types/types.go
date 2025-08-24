@@ -7,7 +7,6 @@ type OrchestratorGlobals struct {
 	BPM          float64
 	Color1       dmx.Lamp
 	Color2       dmx.Lamp
-	Intensity    uint8
 	TotalLamps   int
 	TickRate     int
 	BeatProgress float64

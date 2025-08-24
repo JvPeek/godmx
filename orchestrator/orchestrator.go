@@ -32,7 +32,6 @@ func NewOrchestrator(cfg *config.Config) *Orchestrator {
 			BPM:       120.0,
 			Color1:    dmx.Lamp{R: 255, G: 0, B: 0, W: 0},
 			Color2:    dmx.Lamp{R: 0, G: 0, B: 255, W: 0},
-			Intensity: 255,
 		},
 		lastBeatTime: time.Now(),
 	}
@@ -67,11 +66,6 @@ func (o *Orchestrator) SetColor2(color dmx.Lamp) {
 	o.globals.Color2 = color
 }
 
-// SetIntensity sets the global Intensity.
-func (o *Orchestrator) SetIntensity(intensity uint8) {
-	o.globals.Intensity = intensity
-}
-
 // GetGlobals returns a pointer to the orchestrator's global parameters.
 func (o *Orchestrator) GetGlobals() *types.OrchestratorGlobals {
 	return &o.globals
@@ -91,14 +85,14 @@ func (o *Orchestrator) UpdateBeatProgress() {
 
 // TriggerEvent finds an event by name in the config and executes its actions.
 func (o *Orchestrator) TriggerEvent(eventName string) {
-	eventActions, ok := o.config.Events[eventName]
+	actions, ok := o.config.Actions[eventName]
 	if !ok {
 		fmt.Printf("Event '%s' not found.\n", eventName)
 		return
 	}
 
 	fmt.Printf("Triggering event '%s'\n", eventName)
-	for _, action := range eventActions {
+	for _, action := range actions {
 		if err := o.executeAction(action); err != nil {
 			fmt.Printf("  - Error executing action '%s': %v\n", action.Type, err)
 		}
@@ -161,7 +155,6 @@ func (o *Orchestrator) executeAction(action config.ActionConfig) error {
 			// Also update the running orchestrator's globals
 			if err == nil {
 				o.SetBPM(o.config.Globals.BPM)
-				o.SetIntensity(o.config.Globals.Intensity)
 				color1, err1 := utils.ParseHexColor(o.config.Globals.Color1)
 				if err1 == nil {
 					o.SetColor1(color1)

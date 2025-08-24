@@ -5,10 +5,14 @@ import (
 	"godmx/types"
 )
 
+/*
+Effect Name: Whiteout
+Description: Sets all lamps to full white, overriding any previous colors.
+Tags: [color_source]
+Parameters: []
+*/
 func init() {
-	RegisterEffect("whiteout", func(args map[string]interface{}) (types.Effect, error) {
-		return NewWhiteout(), nil
-	})
+	RegisterEffect("whiteout", NewWhiteout)
 	RegisterEffectMetadata("whiteout", types.EffectMetadata{
 		HumanReadableName: "Whiteout",
 		Description:       "Sets all lamps to full white, overriding any previous colors.",
@@ -23,8 +27,8 @@ type Whiteout struct {
 }
 
 // NewWhiteout creates a new Whiteout effect.
-func NewWhiteout() *Whiteout {
-	return &Whiteout{}
+func NewWhiteout(args map[string]interface{}) (types.Effect, error) {
+	return &Whiteout{}, nil
 }
 
 // Process applies the whiteout effect to the lamps.

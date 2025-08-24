@@ -57,6 +57,25 @@ func (c *Chain) rebuildEffectsFromConfig() error {
 	for i := range c.config.Effects {
 		effectConfig := &c.config.Effects[i] // Get a pointer to modify the original config
 
+		// Get effect metadata for parameter augmentation
+		metadata, ok := effects.GetEffectMetadata(effectConfig.Type)
+		if !ok {
+			return fmt.Errorf("unknown effect type: %s", effectConfig.Type)
+		}
+
+		// Augment effectConfig.Args with default values from metadata
+		augmentedArgs := make(map[string]interface{})
+		// Copy existing args first
+		for k, v := range effectConfig.Args {
+			augmentedArgs[k] = v
+		}
+
+		for _, param := range metadata.Parameters {
+			if _, exists := augmentedArgs[param.InternalName]; !exists {
+				augmentedArgs[param.InternalName] = param.DefaultValue
+			}
+		}
+
 		// Apply group rules: only one effect per group can be enabled
 		if effectConfig.Group != "" {
 			if activeGroups[effectConfig.Group] {
@@ -66,26 +85,22 @@ func (c *Chain) rebuildEffectsFromConfig() error {
 					effectConfig.Enabled = &falseVal
 					fmt.Printf("  - Disabling effect '%s' in group '%s' (group already active)\n", effectConfig.ID, effectConfig.Group)
 				}
-			} else if *effectConfig.Enabled { // If this effect is enabled and its group is not yet active
+			} else if effectConfig.Enabled == nil || *effectConfig.Enabled { // If this effect is enabled or nil and its group is not yet active
+				trueVal := true
+				effectConfig.Enabled = &trueVal // Ensure it's explicitly enabled
 				activeGroups[effectConfig.Group] = true // Mark group as active
 				fmt.Printf("  - Enabling effect '%s' in group '%s' (first active in group)\n", effectConfig.ID, effectConfig.Group)
 			}
 		}
 
 		// Only create the effect instance if it's enabled after group rules
-		if *effectConfig.Enabled {
+		if effectConfig.Enabled == nil || *effectConfig.Enabled {
 			constructor, ok := effects.GetEffectConstructor(effectConfig.Type)
 			if !ok {
 				return fmt.Errorf("unknown effect type: %s", effectConfig.Type)
 			}
 
-			args := effectConfig.Args
-			if args == nil {
-				args = make(map[string]interface{})
-			}
-			args["id"] = effectConfig.ID // Pass ID to constructor
-
-			effect, err := constructor(args)
+			effect, err := constructor(augmentedArgs)
 			if err != nil {
 				return fmt.Errorf("error creating effect '%s': %w", effectConfig.Type, err)
 			}
@@ -95,6 +110,8 @@ func (c *Chain) rebuildEffectsFromConfig() error {
 	c.isDirty = false
 	return nil
 }
+
+
 
 // EnforceGroupRules is called when an effect's enabled state is changed via an event.
 // It ensures that only one effect in a group is enabled in the config.

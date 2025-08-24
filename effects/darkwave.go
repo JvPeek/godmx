@@ -1,15 +1,33 @@
 package effects
 
 import (
+	"fmt"
 	"godmx/dmx"
 	"godmx/types"
 	"math"
 )
 
+/*
+Effect Name: Darkwave
+Description: Creates a dark wave that travels across the lamps, dimming them based on a sine wave.
+Tags: [bpm_sensitive, transparent, brightness_mask, pattern]
+Parameters:
+  - InternalName: percentage
+    DisplayName: Percentage
+    Description: The maximum percentage of dimming applied by the wave (0.0 - 1.0).
+    DataType: float64
+    DefaultValue: 0.5
+    MinValue: 0.0
+    MaxValue: 1.0
+  - InternalName: speed
+    DisplayName: Speed
+    Description: How fast the dark wave travels.
+    DataType: float64
+    DefaultValue: 1.0
+    MinValue: 0.0
+*/
 func init() {
-	RegisterEffect("darkwave", func(args map[string]interface{}) (types.Effect, error) {
-		return NewDarkWave(args)
-	})
+	RegisterEffect("darkwave", NewDarkWave)
 	RegisterEffectMetadata("darkwave", types.EffectMetadata{
 		HumanReadableName: "Darkwave",
 		Description:       "Creates a dark wave that travels across the lamps, dimming them based on a sine wave.",
@@ -43,15 +61,14 @@ func init() {
 }
 
 // NewDarkWave creates a new DarkWave effect.
-func NewDarkWave(args map[string]interface{}) (*DarkWave, error) {
-	percentage := 0.5 // Default value
-	if p, ok := args["percentage"].(float64); ok {
-		percentage = p
+func NewDarkWave(args map[string]interface{}) (types.Effect, error) {
+	percentage, ok := args["percentage"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("darkwave effect: missing or invalid 'percentage' parameter")
 	}
-
-	speed := 1.0 // Default value
-	if s, ok := args["speed"].(float64); ok {
-		speed = s
+	speed, ok := args["speed"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("darkwave effect: missing or invalid 'speed' parameter")
 	}
 
 	return &DarkWave{Percentage: percentage, Speed: speed}, nil

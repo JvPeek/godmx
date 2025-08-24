@@ -1,14 +1,32 @@
 package effects
 
 import (
+	"fmt"
 	"godmx/dmx"
 	"godmx/types"
 )
 
+/*
+Effect Name: Blink
+Description: Alternates between two colors based on the global BPM, creating a blinking effect.
+Tags: [bpm_sensitive, color_source, pattern]
+Parameters:
+  - InternalName: divider
+    DisplayName: Divider
+    Description: Divides the beat into segments for faster blinking.
+    DataType: int
+    DefaultValue: 1
+    MinValue: 1
+  - InternalName: dutyCycle
+    DisplayName: Duty Cycle
+    Description: Percentage of the segment that Color1 is shown.
+    DataType: float64
+    DefaultValue: 0.5
+    MinValue: 0.0
+    MaxValue: 1.0
+*/
 func init() {
-	RegisterEffect("blink", func(args map[string]interface{}) (types.Effect, error) {
-		return NewBlink(args), nil
-	})
+	RegisterEffect("blink", NewBlink)
 	RegisterEffectMetadata("blink", types.EffectMetadata{
 		HumanReadableName: "Blink",
 		Description:       "Alternates between two colors based on the global BPM, creating a blinking effect.",
@@ -42,16 +60,16 @@ type Blink struct {
 }
 
 // NewBlink creates a new Blink effect.
-func NewBlink(args map[string]interface{}) *Blink {
-	divider := 1 // Default value
-	if d, ok := args["divider"].(float64); ok {
-		divider = int(d)
+func NewBlink(args map[string]interface{}) (types.Effect, error) {
+	divider, ok := args["divider"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("blink effect: missing or invalid 'divider' parameter")
 	}
-	dutyCycle := 0.5 // Default value
-	if dc, ok := args["dutyCycle"].(float64); ok {
-		dutyCycle = dc
+	dutyCycle, ok := args["dutyCycle"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("blink effect: missing or invalid 'dutyCycle' parameter")
 	}
-	return &Blink{Divider: divider, DutyCycle: dutyCycle}
+	return &Blink{Divider: int(divider), DutyCycle: dutyCycle}, nil
 }
 
 // Process applies the blink effect to the lamps.

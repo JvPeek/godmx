@@ -6,10 +6,24 @@ import (
 	"godmx/types"
 )
 
+/*
+Effect Name: Shift
+Description: Shifts the DMX data (colors) across the lamps either left or right, synchronized with the BPM.
+Tags: [bpm_sensitive, transparent, transform, pattern]
+Parameters:
+  - InternalName: direction
+    DisplayName: Direction
+    Description: The direction to shift the lamps ('left' or 'right').
+    DataType: string
+    DefaultValue: "left"
+  - InternalName: speed
+    DisplayName: Speed
+    Description: The speed of the shift, from 0 to 1 (1 being 1 shift per beat).
+    DataType: float64
+    DefaultValue: 1.0
+*/
 func init() {
-	RegisterEffect("shift", func(args map[string]interface{}) (types.Effect, error) {
-		return NewShift(args)
-	})
+	RegisterEffect("shift", NewShift)
 	RegisterEffectMetadata("shift", types.EffectMetadata{
 		HumanReadableName: "Shift",
 		Description:       "Shifts the DMX data (colors) across the lamps either left or right, synchronized with the BPM.",
@@ -40,33 +54,20 @@ type Shift struct {
 }
 
 // NewShift creates a new Shift effect.
-func NewShift(args map[string]interface{}) (*Shift, error) {
+func NewShift(args map[string]interface{}) (types.Effect, error) {
 	direction, ok := args["direction"].(string)
-	if !ok || direction == "" {
-		direction = "left" // Default to "left" if not provided or empty
+	if !ok {
+		return nil, fmt.Errorf("shift effect: missing or invalid 'direction' parameter")
 	}
-
 	if direction != "left" && direction != "right" {
-		return nil, fmt.Errorf("invalid direction for shift effect: %s. Must be 'left' or 'right'", direction)
+		return nil, fmt.Errorf("shift effect: invalid direction '%s'. Must be 'left' or 'right'", direction)
+	}
+	speed, ok := args["speed"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("shift effect: missing or invalid 'speed' parameter")
 	}
 
-	speed := 1.0 // Default speed
-	if s, ok := args["speed"].(float64); ok {
-		if s >= 0 && s <= 1 {
-			speed = s
-		} else {
-			return nil, fmt.Errorf("invalid speed for shift effect: %f. Must be between 0 and 1", s)
-		}
-	} else if s, ok := args["speed"].(int); ok {
-		if float64(s) >= 0 && float64(s) <= 1 {
-			speed = float64(s)
-		} else {
-			return nil, fmt.Errorf("invalid speed for shift effect: %d. Must be between 0 and 1", s)
-		}
-	}
-
-	return &Shift{Direction: direction, Speed: speed},
-		nil
+	return &Shift{Direction: direction, Speed: speed}, nil
 }
 
 // Process applies the shift effect to the lamps.

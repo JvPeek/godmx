@@ -7,10 +7,14 @@ import (
 	"math"
 )
 
+/*
+Effect Name: Rainbow
+Description: Generates a static rainbow spectrum across the lamps.
+Tags: [color_source, pattern]
+Parameters: []
+*/
 func init() {
-	RegisterEffect("rainbow", func(args map[string]interface{}) (types.Effect, error) {
-		return NewRainbow(), nil
-	})
+	RegisterEffect("rainbow", NewRainbow)
 	RegisterEffectMetadata("rainbow", types.EffectMetadata{
 		HumanReadableName: "Rainbow",
 		Description:       "Generates a static rainbow spectrum across the lamps.",
@@ -25,8 +29,8 @@ type Rainbow struct {
 }
 
 // NewRainbow creates a new Rainbow effect.
-func NewRainbow() *Rainbow {
-	return &Rainbow{}
+func NewRainbow(args map[string]interface{}) (types.Effect, error) {
+	return &Rainbow{}, nil
 }
 
 // Process applies the rainbow effect to the lamps.

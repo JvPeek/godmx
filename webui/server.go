@@ -153,7 +153,7 @@ func StartWebServer(orch *orchestrator.Orchestrator, cfg *config.Config, port in
 	http.HandleFunc("/api/events", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		var eventNames []string
-		for name := range cfg.Events {
+		for name := range cfg.Actions {
 			eventNames = append(eventNames, name)
 		}
 		sort.Strings(eventNames) // Sort event names alphabetically

@@ -40,23 +40,7 @@ func main() {
 	cfg, err := config.LoadConfig(*configPath)
 	if err != nil {
 		fmt.Printf("Error loading configuration: %v\n", err)
-		// If config file doesn't exist, create a default one and try to load again
-		if os.IsNotExist(err) {
-			fmt.Printf("Config file not found at '%s', creating a default one.\n", *configPath)
-			defaultCfg := config.CreateDefaultConfig()
-			if err := config.SaveConfig(&defaultCfg, *configPath); err != nil {
-				fmt.Printf("Error creating default config file: %v\n", err)
-				return
-			}
-			// Try loading again after creating default
-			cfg, err = config.LoadConfig(*configPath)
-			if err != nil {
-				fmt.Printf("Error loading configuration after creating default: %v\n", err)
-				return
-			}
-		} else {
-			return
-		}
+		return
 	}
 
 	// Create Orchestrator
@@ -68,7 +52,6 @@ func main() {
 	orch.SetColor1(color1)
 	color2, _ := utils.ParseHexColor(cfg.Globals.Color2)
 	orch.SetColor2(color2)
-	orch.SetIntensity(cfg.Globals.Intensity)
 
 	// --- Build Chains from config ---
 	for i := range cfg.Chains {
@@ -119,11 +102,11 @@ func main() {
 		chain.StartLoop()
 	}
 
-	fmt.Printf("Checking MIDI triggers. Count: %d\n", len(cfg.MidiTriggers))
+	fmt.Printf("Checking MIDI triggers. Count: %d\n", len(cfg.Triggers))
 	// Initialize and start MIDI controller if triggers are configured
-	if len(cfg.MidiTriggers) > 0 {
+	if len(cfg.Triggers) > 0 {
 		fmt.Println("MIDI triggers found. Initializing MIDI controller...")
-		midiController, err := midi.NewMidiController(orch, cfg.MidiTriggers, cfg.MidiPortName)
+		midiController, err := midi.NewMidiController(orch, cfg.Triggers, cfg.MidiPortName)
 		if err != nil {
 			fmt.Printf("Error initializing MIDI controller: %v\n", err)
 			// Continue without MIDI, or exit? For now, continue.

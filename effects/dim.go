@@ -7,10 +7,21 @@ import (
 	"math"
 )
 
+/*
+Effect Name: Dim
+Description: Dims all lamps by a specified percentage.
+Tags: [transparent, brightness_mask]
+Parameters:
+  - InternalName: percentage
+    DisplayName: Percentage
+    Description: The percentage to dim the lamps by (0.0 - 1.0).
+    DataType: float64
+    DefaultValue: 0.5
+    MinValue: 0.0
+    MaxValue: 1.0
+*/
 func init() {
-	RegisterEffect("dim", func(args map[string]interface{}) (types.Effect, error) {
-		return NewDim(args)
-	})
+	RegisterEffect("dim", NewDim)
 	RegisterEffectMetadata("dim", types.EffectMetadata{
 		HumanReadableName: "Dim",
 		Description:       "Dims all lamps by a specified percentage.",
@@ -35,11 +46,10 @@ type Dim struct {
 }
 
 // NewDim creates a new Dim effect.
-func NewDim(args map[string]interface{}) (*Dim, error) {
-	percentage := args["percentage"].(float64)
-
-	if percentage < 0 || percentage > 1.0 {
-		return nil, fmt.Errorf("percentage for dim effect must be between 0.0 and 1.0, got %f", percentage)
+func NewDim(args map[string]interface{}) (types.Effect, error) {
+	percentage, ok := args["percentage"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("dim effect: missing or invalid 'percentage' parameter")
 	}
 
 	return &Dim{Percentage: percentage}, nil

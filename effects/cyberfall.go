@@ -1,14 +1,60 @@
 package effects
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
 	"godmx/dmx"
 	"godmx/types"
-	"godmx/utils"
 )
 
+/*
+Effect Name: Cyberfall
+Description: Simulates digital rain, acting as a brightness mask over existing colors.
+Tags: [transparent, brightness_mask, random]
+Parameters:
+  - InternalName: speed
+    DisplayName: Speed
+    Description: How fast the 'rain' falls.
+    DataType: float64
+    DefaultValue: 1.0
+    MinValue: 0.0
+  - InternalName: density
+    DisplayName: Density
+    Description: How many 'active' columns are falling (0.0 - 1.0).
+    DataType: float64
+    DefaultValue: 0.5
+    MinValue: 0.0
+    MaxValue: 1.0
+  - InternalName: trail_length
+    DisplayName: Trail Length
+    Description: How long the 'tail' of the falling light is (in lamps).
+    DataType: int
+    DefaultValue: 10
+    MinValue: 0
+  - InternalName: min_brightness
+    DisplayName: Min Brightness
+    Description: Minimum brightness for dark parts (0-255).
+    DataType: int
+    DefaultValue: 0
+    MinValue: 0
+    MaxValue: 255
+  - InternalName: max_brightness
+    DisplayName: Max Brightness
+    Description: Maximum brightness for bright parts (0-255).
+    DataType: int
+    DefaultValue: 255
+    MinValue: 0
+    MaxValue: 255
+  - InternalName: flicker_intensity
+    DisplayName: Flicker Intensity
+    Description: Random variation applied to brightness (0.0 - 1.0).
+    DataType: float64
+    DefaultValue: 0.1
+    MinValue: 0.0
+    MaxValue: 1.0
+*/
 func init() {
 	rand.Seed(time.Now().UnixNano())
 	RegisterEffect("cyberfall", NewCyberfall)
@@ -90,20 +136,38 @@ type Cyberfall struct {
 }
 
 // NewCyberfall creates a new Cyberfall effect.
-func NewCyberfall(args map[string]interface{}) (types.Effect, error) { // Changed to types.Effect
-	speed := utils.GetFloatArg(args, "speed", 1.0)
-	density := utils.GetFloatArg(args, "density", 0.5)
-	trailLength := utils.GetIntArg(args, "trail_length", 10)
-	minBrightness := uint8(utils.GetIntArg(args, "min_brightness", 0))
-	maxBrightness := uint8(utils.GetIntArg(args, "max_brightness", 255))
-	flickerIntensity := utils.GetFloatArg(args, "flicker_intensity", 0.1)
+func NewCyberfall(args map[string]interface{}) (types.Effect, error) {
+	speed, ok := args["speed"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("cyberfall effect: missing or invalid 'speed' parameter")
+	}
+	density, ok := args["density"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("cyberfall effect: missing or invalid 'density' parameter")
+	}
+	trailLength, ok := args["trail_length"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("cyberfall effect: missing or invalid 'trail_length' parameter")
+	}
+	minBrightness, ok := args["min_brightness"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("cyberfall effect: missing or invalid 'min_brightness' parameter")
+	}
+	maxBrightness, ok := args["max_brightness"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("cyberfall effect: missing or invalid 'max_brightness' parameter")
+	}
+	flickerIntensity, ok := args["flicker_intensity"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("cyberfall effect: missing or invalid 'flicker_intensity' parameter")
+	}
 
 	return &Cyberfall{
 		Speed:         speed,
 		Density:       density,
-		TrailLength:   trailLength,
-		MinBrightness: minBrightness,
-		MaxBrightness: maxBrightness,
+		TrailLength:   int(trailLength),
+		MinBrightness: uint8(minBrightness),
+		MaxBrightness: uint8(maxBrightness),
 		FlickerIntensity: flickerIntensity,
 		lastUpdate:    time.Now(),
 	}, nil

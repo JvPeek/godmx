@@ -1,16 +1,28 @@
 package effects
 
 import (
+	"fmt"
 	"godmx/dmx"
 	"godmx/types"
 	"math/rand"
 	"time"
 )
 
+/*
+Effect Name: Twinkle
+Description: Randomly turns a percentage of lamps to white at the beginning of each beat, creating a twinkling effect.
+Tags: [bpm_sensitive, color_source, random, pattern]
+Parameters:
+  - InternalName: percentage
+    DisplayName: Percentage
+    Description: The percentage of lamps to twinkle (0.0 - 1.0).
+    DataType: float64
+    DefaultValue: 0.1
+    MinValue: 0.0
+    MaxValue: 1.0
+*/
 func init() {
-	RegisterEffect("twinkle", func(args map[string]interface{}) (types.Effect, error) {
-		return NewTwinkle(args)
-	})
+	RegisterEffect("twinkle", NewTwinkle)
 	RegisterEffectMetadata("twinkle", types.EffectMetadata{
 		HumanReadableName: "Twinkle",
 		Description:       "Randomly turns a percentage of lamps to white at the beginning of each beat, creating a twinkling effect.",
@@ -38,8 +50,11 @@ type Twinkle struct {
 }
 
 // NewTwinkle creates a new Twinkle effect.
-func NewTwinkle(args map[string]interface{}) (*Twinkle, error) {
-	percentage := args["percentage"].(float64)
+func NewTwinkle(args map[string]interface{}) (types.Effect, error) {
+	percentage, ok := args["percentage"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("twinkle effect: missing or invalid 'percentage' parameter")
+	}
 
 	src := rand.NewSource(time.Now().UnixNano())
 	gen := rand.New(src)
