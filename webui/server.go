@@ -1,15 +1,55 @@
 package webui
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"godmx/config"
 	"godmx/orchestrator"
+	"io/fs"
 	"log"
 	"net/http"
-	"path/filepath"
+	"path"
 	"sort"
+	"time"
 )
+
+//go:embed web
+var content embed.FS
+
+// staticHandler serves static files with correct MIME types.
+type staticHandler struct {
+	fs http.FileSystem
+}
+
+func (h *staticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Prepend "web/" to the path to access files within the embedded "web" directory
+	filePath := path.Join("web", r.URL.Path)
+
+	// Open the file from the embedded file system
+	f, err := h.fs.Open(filePath)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer f.Close()
+
+	// Determine content type based on file extension
+	switch path.Ext(r.URL.Path) {
+	case ".css":
+		w.Header().Set("Content-Type", "text/css")
+	case ".js":
+		w.Header().Set("Content-Type", "application/javascript")
+	default:
+		// Let http.ServeContent determine the content type for other files
+		// or if it's an unknown extension
+	}
+
+	// Serve the file
+	http.ServeContent(w, r, r.URL.Path, time.Time{}, f)
+}
+
+
 
 // ChainConfig represents a simplified chain configuration for JSON serialization
 type ChainConfig struct {
@@ -21,7 +61,7 @@ type ChainConfig struct {
 	Effects   []EffectConfig `json:"Effects"`
 }
 
-// OutputConfig represents a simplified output configuration for JSON serialization
+// EffectConfig represents a simplified effect configuration for JSON serialization
 type EffectConfig struct {
 	Type    string                 `json:"Type"`
 	Args    map[string]interface{} `json:"Args"`
@@ -38,10 +78,12 @@ type OutputConfig struct {
 
 
 
+
+
 // StartWebServer starts the HTTP server for the web UI.
 func StartWebServer(orch *orchestrator.Orchestrator, cfg *config.Config, port int) {
 	// Serve static files
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web"))))
+		http.Handle("/static/", http.StripPrefix("/static/", &staticHandler{http.FS(content)}))
 
 	// Serve index.html
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +91,14 @@ func StartWebServer(orch *orchestrator.Orchestrator, cfg *config.Config, port in
 			http.NotFound(w, r)
 			return
 		}
-		http.ServeFile(w, r, filepath.Join("web", "index.html"))
+		indexHTML, err := fs.ReadFile(content, "web/index.html")
+		if err != nil {
+			http.Error(w, "Could not read index.html", http.StatusInternalServerError)
+			log.Printf("Error reading index.html: %v", err)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(indexHTML)
 	})
 
 	// API endpoint for chains
